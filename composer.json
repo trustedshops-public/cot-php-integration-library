@@ -1,0 +1,29 @@
+{
+    "name": "trstd/cot-integration-library",
+    "type": "library",
+    "description": "A PHP integration library for connecting to Community of Trust platform.",
+    "keywords": [
+        "cot",
+        "trstd",
+        "trustedshops",
+        "integration",
+        "library"
+    ],
+    "homepage": "https://github.com/trustedshops-public/cot-php-integration-library",
+    "license": "Apache-2.0",
+    "require": {
+        "php": ">=7.2",
+        "firebase/php-jwt": "^6",
+        "phpseclib/phpseclib": "^3",
+        "monolog/monolog": "^2"
+    },
+    "autoload": {
+        "psr-4": {
+            "TRSTD\\": "src/"
+        }
+    },
+    "config": {
+        "preferred-install": "dist",
+        "prepend-autoloader": false
+    }
+}
