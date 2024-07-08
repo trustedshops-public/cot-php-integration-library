@@ -297,7 +297,7 @@ class Client
     private function setTokenOnStorage(Token $token)
     {
         try {
-            $decodedToken = JWT::decode($token->accessToken, JWK::parseKeySet($this->getJWKS()));
+            $decodedToken = JWT::decode($token->idToken, JWK::parseKeySet($this->getJWKS()));
             $this->authStorage->set($token, $decodedToken->ctc_id);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
