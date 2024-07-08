@@ -72,6 +72,12 @@ class Client
      */
     private $logger;
 
+
+    /**
+     * @var CachedKeySet
+     */
+    private $cachedKeySet;
+
     /**
      * @param string $tsId - TS ID
      * @param string $clientId - client ID
@@ -102,6 +108,19 @@ class Client
         $this->clientSecret = $clientSecret;
         $this->authStorage = $authStorage;
         $this->logger = new Logger();
+
+        $httpClient = new \GuzzleHttp\Client();
+        $httpFactory = new HttpFactory();
+        $cacheItemPool = \Phpfastcache\CacheManager::getInstance('files');
+
+        $this->cachedKeySet = new CachedKeySet(
+            ENDPOINT_CERTS,
+            $httpClient,
+            $httpFactory,
+            $cacheItemPool,
+            3600,
+            true
+        );
     }
 
     /**
@@ -167,30 +186,10 @@ class Client
     {
         if (isset($_COOKIE[self::$identityCookie])) {
             $idToken = $_COOKIE[self::$identityCookie];
-            $decodedToken = JWT::decode($idToken, $this->getCachedJWKSKeySet());
+            $decodedToken = JWT::decode($idToken, $this->cachedKeySet);
             $this->authStorage->remove($decodedToken->ctc_id);
             $this->removeIdentityCookie();
         }
-    }
-
-
-    /**
-     * @return CachedKeySet
-     */
-    private function getCachedJWKSKeySet()
-    {
-        $httpClient = new \GuzzleHttp\Client();
-        $httpFactory = new HttpFactory();
-        $cacheItemPool = \Phpfastcache\CacheManager::getInstance('files');
-
-        return new CachedKeySet(
-            ENDPOINT_CERTS,
-            $httpClient,
-            $httpFactory,
-            $cacheItemPool,
-            null, // $expiresAfter int seconds to set the JWKS to expire
-            true  // $rateLimit    true to enable rate limit of 10 RPS on lookup of invalid keys
-        );
     }
 
     /**
@@ -259,7 +258,7 @@ class Client
             try {
                 if ($token->accessToken) {
                     $this->logger->debug('access token is in storage. verifying...');
-                    JWT::decode($token->accessToken, $this->getCachedJWKSKeySet());
+                    JWT::decode($token->accessToken, $this->cachedKeySet);
                 } else {
                     $this->logger->debug('access token cannot be found. refreshing...');
                     $shouldRefresh = true;
@@ -300,7 +299,7 @@ class Client
     private function setTokenOnStorage(Token $token)
     {
         try {
-            $decodedToken = JWT::decode($token->idToken, $this->getCachedJWKSKeySet());
+            $decodedToken = JWT::decode($token->idToken, $this->cachedKeySet);
             $this->authStorage->set($token, $decodedToken->ctc_id);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
@@ -317,7 +316,7 @@ class Client
     private function getTokenFromStorage($idToken)
     {
         try {
-            $decodedToken = JWT::decode($idToken, $this->getCachedJWKSKeySet());
+            $decodedToken = JWT::decode($idToken, $this->cachedKeySet);
             return $this->authStorage->getByCtcId($decodedToken->ctc_id);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
