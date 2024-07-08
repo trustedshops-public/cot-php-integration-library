@@ -6,6 +6,8 @@ namespace COT;
 
 use Exception;
 use Firebase\JWT\ExpiredException;
+use Firebase\JWT\JWT;
+use Firebase\JWT\JWK;
 
 use COT\Logger;
 use COT\HttpClient;
@@ -16,7 +18,7 @@ use COT\AnonymousConsumerData;
 use COT\Exception\UnexpectedErrorException;
 use COT\Exception\RequiredParameterMissingException;
 use COT\Util\EncryptionUtils;
-use COT\Util\JWTKUtils;
+use COT\Util\JWTUtils;
 use COT\Util\PKCEUtils;
 
 if (!defined('URL_REALM')) {
@@ -170,22 +172,22 @@ class Client
     {
         if (isset($_COOKIE[self::$identityCookie])) {
             $idToken = $_COOKIE[self::$identityCookie];
-            $decodedToken = JWTKUtils::decodeToken($this->getJWK(), $idToken, false);
+            $decodedToken = JWT::decode($idToken, JWK::parseKeySet($this->getJWKS()));
             $this->authStorage->remove($decodedToken->ctc_id);
             $this->removeIdentityCookie();
         }
     }
 
     /**
-     * @return object
+     * @return array
      */
-    private function getJWK()
+    private function getJWKS()
     {
         if (!$this->certificateCache) {
             $this->certificateCache = HttpClient::get(ENDPOINT_CERTS);
         }
 
-        return $this->certificateCache->keys[0];
+        return $this->certificateCache;
     }
 
     /**
@@ -254,7 +256,7 @@ class Client
             try {
                 if ($token->accessToken) {
                     $this->logger->debug('access token is in storage. verifying...');
-                    JWTKUtils::decodeToken($this->getJWK(), $token->accessToken);
+                    JWT::decode($token->accessToken, JWK::parseKeySet($this->getJWKS()));
                 } else {
                     $this->logger->debug('access token cannot be found. refreshing...');
                     $shouldRefresh = true;
@@ -312,7 +314,7 @@ class Client
     private function getTokenFromStorage($idToken)
     {
         try {
-            $decodedToken = JWTKUtils::decodeToken($this->getJWK(), $idToken, false);
+            $decodedToken = JWTUtils::decodeToken($this->getJWK(), $idToken, false);
             return $this->authStorage->getByCtcId($decodedToken->ctc_id);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
