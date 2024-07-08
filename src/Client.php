@@ -185,7 +185,7 @@ class Client
             $this->certificateCache = HttpClient::get(ENDPOINT_CERTS);
         }
 
-        return $this->certificateCache;
+        return $this->certificateCache->keys[0];
     }
 
     /**
