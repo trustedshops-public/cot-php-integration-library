@@ -17,6 +17,8 @@ use COT\Util\EncryptionUtils;
 use COT\Util\JWTKUtils;
 use COT\Util\PKCEUtils;
 
+require '../vendor/autoload.php';
+
 if (!defined('URL_REALM')) {
     define('URL_REALM', 'https://auth-qa.trustedshops.com/auth/realms/myTS-QA');
 }
