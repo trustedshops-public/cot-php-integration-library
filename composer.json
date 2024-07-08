@@ -15,7 +15,9 @@
         "php": ">=7.2",
         "firebase/php-jwt": "^6",
         "phpseclib/phpseclib": "^3",
-        "monolog/monolog": "^2"
+        "monolog/monolog": "^2",
+        "phpfastcache/phpfastcache": "^8.1",
+        "guzzlehttp/guzzle": "^7.0"
     },
     "autoload": {
         "psr-4": {

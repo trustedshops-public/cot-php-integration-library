@@ -6,8 +6,8 @@ namespace COT;
 
 use Exception;
 use Firebase\JWT\ExpiredException;
+use Firebase\JWT\CachedKeySet;
 use Firebase\JWT\JWT;
-use Firebase\JWT\JWK;
 
 use COT\Logger;
 use COT\HttpClient;
@@ -19,6 +19,7 @@ use COT\Exception\UnexpectedErrorException;
 use COT\Exception\RequiredParameterMissingException;
 use COT\Util\EncryptionUtils;
 use COT\Util\PKCEUtils;
+use GuzzleHttp\Psr7\HttpFactory;
 
 if (!defined('URL_REALM')) {
     define('URL_REALM', 'https://auth-qa.trustedshops.com/auth/realms/myTS-QA');
@@ -45,11 +46,6 @@ class Client
     private static $identityCookie = 'TRSTD_ID_TOKEN';
     private static $codeVerifierCookie = 'TRSTD_CV';
     private static $codeChallengeCookie = 'TRSTD_CC';
-
-    /**
-     * @var object
-     */
-    private $certificateCache;
 
     /**
      * @var AuthStorage
@@ -171,22 +167,30 @@ class Client
     {
         if (isset($_COOKIE[self::$identityCookie])) {
             $idToken = $_COOKIE[self::$identityCookie];
-            $decodedToken = JWT::decode($idToken, $this->getJWKSParseKeySet());
+            $decodedToken = JWT::decode($idToken, $this->getCachedJWKSKeySet());
             $this->authStorage->remove($decodedToken->ctc_id);
             $this->removeIdentityCookie();
         }
     }
 
-    /**
-     * @return parseKeySet
-     */
-    private function getJWKSParseKeySet()
-    {
-        if (!$this->certificateCache) {
-            $this->certificateCache = HttpClient::get(ENDPOINT_CERTS);
-        }
 
-        return JWK::parseKeySet($this->certificateCache->keys);
+    /**
+     * @return CachedKeySet
+     */
+    private function getCachedJWKSKeySet()
+    {
+        $httpClient = new \GuzzleHttp\Client();
+        $httpFactory = new HttpFactory();
+        $cacheItemPool = \Phpfastcache\CacheManager::getInstance('files');
+
+        return new CachedKeySet(
+            ENDPOINT_CERTS,
+            $httpClient,
+            $httpFactory,
+            $cacheItemPool,
+            null, // $expiresAfter int seconds to set the JWKS to expire
+            true  // $rateLimit    true to enable rate limit of 10 RPS on lookup of invalid keys
+        );
     }
 
     /**
@@ -255,7 +259,7 @@ class Client
             try {
                 if ($token->accessToken) {
                     $this->logger->debug('access token is in storage. verifying...');
-                    JWT::decode($token->accessToken, $this->getJWKSParseKeySet());
+                    JWT::decode($token->accessToken, $this->getCachedJWKSKeySet());
                 } else {
                     $this->logger->debug('access token cannot be found. refreshing...');
                     $shouldRefresh = true;
@@ -296,7 +300,7 @@ class Client
     private function setTokenOnStorage(Token $token)
     {
         try {
-            $decodedToken = JWT::decode($token->idToken, $this->getJWKSParseKeySet());
+            $decodedToken = JWT::decode($token->idToken, $this->getCachedJWKSKeySet());
             $this->authStorage->set($token, $decodedToken->ctc_id);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
@@ -313,7 +317,7 @@ class Client
     private function getTokenFromStorage($idToken)
     {
         try {
-            $decodedToken = JWT::decode($idToken, $this->getJWKSParseKeySet());
+            $decodedToken = JWT::decode($idToken, $this->getCachedJWKSKeySet());
             return $this->authStorage->getByCtcId($decodedToken->ctc_id);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
