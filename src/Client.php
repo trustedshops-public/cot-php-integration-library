@@ -112,7 +112,7 @@ class Client
         $this->logger = new Logger();
 
         $this->httpClient = new \GuzzleHttp\Client();
-        $httpFactory = new \GuzzleHttp\Psr\HttpFactory();
+        $httpFactory = new \GuzzleHttp\Psr7\HttpFactory();
         $cacheItemPool = \Phpfastcache\CacheManager::getInstance('files');
         $this->cachedKeySet = new CachedKeySet(
             ENDPOINT_CERTS,
