@@ -10,7 +10,6 @@ use Firebase\JWT\CachedKeySet;
 use Firebase\JWT\JWT;
 
 use COT\Logger;
-use COT\HttpClient;
 use COT\AuthStorage;
 use COT\Token;
 use COT\ActionType;
@@ -19,7 +18,6 @@ use COT\Exception\UnexpectedErrorException;
 use COT\Exception\RequiredParameterMissingException;
 use COT\Util\EncryptionUtils;
 use COT\Util\PKCEUtils;
-use GuzzleHttp\Psr7\HttpFactory;
 
 if (!defined('URL_REALM')) {
     define('URL_REALM', 'https://auth-qa.trustedshops.com/auth/realms/myTS-QA');
@@ -72,11 +70,15 @@ class Client
      */
     private $logger;
 
-
     /**
      * @var CachedKeySet
      */
     private $cachedKeySet;
+
+    /**
+     * @var \GuzzleHttp\Client
+     */
+    private $httpClient;
 
     /**
      * @param string $tsId - TS ID
@@ -109,13 +111,12 @@ class Client
         $this->authStorage = $authStorage;
         $this->logger = new Logger();
 
-        $httpClient = new \GuzzleHttp\Client();
-        $httpFactory = new HttpFactory();
+        $this->httpClient = new \GuzzleHttp\Client();
+        $httpFactory = new \GuzzleHttp\Psr\HttpFactory();
         $cacheItemPool = \Phpfastcache\CacheManager::getInstance('files');
-
         $this->cachedKeySet = new CachedKeySet(
             ENDPOINT_CERTS,
-            $httpClient,
+            $this->httpClient,
             $httpFactory,
             $cacheItemPool,
             3600,
@@ -156,7 +157,7 @@ class Client
                 'Authorization: Bearer ' . $accessToken,
             ];
 
-            return HttpClient::get(ENDPOINT_ANONYMOUS_DATA . ($this->tsId ? "?shopId=" . $this->tsId : ""), $headers);
+            return $this->httpClient->get(ENDPOINT_ANONYMOUS_DATA . ($this->tsId ? "?shopId=" . $this->tsId : ""), $headers);
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
             return null;
@@ -211,7 +212,7 @@ class Client
             'code_verifier' => $this->getCodeVerifierCookie(),
         ];
 
-        $responseJson = HttpClient::post(ENDPOINT_TOKEN, $headers, $data);
+        $responseJson = $this->httpClient->post(ENDPOINT_TOKEN, $headers, $data);
         if (!$responseJson || isset($responseJson->error)) {
             return null;
         }
@@ -236,7 +237,7 @@ class Client
             'refresh_token' => $refreshToken,
         ];
 
-        $responseJson = HttpClient::post(ENDPOINT_TOKEN, $headers, $data);
+        $responseJson = $this->httpClient->post(ENDPOINT_TOKEN, $headers, $data);
         if (!$responseJson || isset($responseJson->error)) {
             return null;
         }
