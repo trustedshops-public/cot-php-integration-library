@@ -18,7 +18,6 @@ use COT\AnonymousConsumerData;
 use COT\Exception\UnexpectedErrorException;
 use COT\Exception\RequiredParameterMissingException;
 use COT\Util\EncryptionUtils;
-use COT\Util\JWTUtils;
 use COT\Util\PKCEUtils;
 
 if (!defined('URL_REALM')) {
@@ -314,7 +313,7 @@ class Client
     private function getTokenFromStorage($idToken)
     {
         try {
-            $decodedToken = JWTUtils::decodeToken($this->getJWK(), $idToken, false);
+            $decodedToken = JWT::decode($idToken, JWK::parseKeySet($this->getJWKS()));
             return $this->authStorage->getByCtcId($decodedToken->ctc_id);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
