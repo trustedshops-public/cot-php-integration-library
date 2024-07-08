@@ -12,6 +12,7 @@ use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\Client as GuzzleHttpClient;
 use Symfony\Component\HttpClient\HttpClient;
 use Phpfastcache\CacheManager;
+use Psr\Http\Client\ClientInterface;
 
 use COT\Logger;
 use COT\AuthStorage;
@@ -80,7 +81,7 @@ class Client
     private $cachedKeySet;
 
     /**
-     * @var Psr\Http\Client\ClientInterface;
+     * @var ClientInterface
      */
     private $httpClient;
 
