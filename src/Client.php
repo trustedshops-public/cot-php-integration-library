@@ -8,6 +8,10 @@ use Exception;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\CachedKeySet;
 use Firebase\JWT\JWT;
+use GuzzleHttp\Psr7\HttpFactory;
+use GuzzleHttp\Client as GuzzleHttpClient;
+use Symfony\Component\HttpClient\HttpClient;
+use Phpfastcache\CacheManager;
 
 use COT\Logger;
 use COT\AuthStorage;
@@ -76,7 +80,7 @@ class Client
     private $cachedKeySet;
 
     /**
-     * @var \GuzzleHttp\Client
+     * @var Psr\Http\Client\ClientInterface;
      */
     private $httpClient;
 
@@ -111,9 +115,10 @@ class Client
         $this->authStorage = $authStorage;
         $this->logger = new Logger();
 
-        $this->httpClient = new \GuzzleHttp\Client();
-        $httpFactory = new \GuzzleHttp\Psr7\HttpFactory();
-        $cacheItemPool = \Phpfastcache\CacheManager::getInstance('files');
+        $this->httpClient = HttpClient::create();
+        $httpFactory = new HttpFactory();
+        $cacheItemPool = CacheManager::getInstance('files');
+
         $this->cachedKeySet = new CachedKeySet(
             ENDPOINT_CERTS,
             $this->httpClient,

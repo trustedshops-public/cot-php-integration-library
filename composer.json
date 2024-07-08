@@ -18,7 +18,8 @@
         "monolog/monolog": "^2.9",
         "phpfastcache/phpfastcache": "^8.1",
         "guzzlehttp/guzzle": "^7.8",
-        "paragonie/sodium_compat": "^1.21"
+        "paragonie/sodium_compat": "^1.21",
+        "symfony/http-client": "^5.4"
     },
     "autoload": {
         "psr-4": {
