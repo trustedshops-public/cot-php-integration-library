@@ -171,22 +171,22 @@ class Client
     {
         if (isset($_COOKIE[self::$identityCookie])) {
             $idToken = $_COOKIE[self::$identityCookie];
-            $decodedToken = JWT::decode($idToken, JWK::parseKeySet($this->getJWKS()));
+            $decodedToken = JWT::decode($idToken, $this->getJWKSParseKeySet());
             $this->authStorage->remove($decodedToken->ctc_id);
             $this->removeIdentityCookie();
         }
     }
 
     /**
-     * @return array
+     * @return parseKeySet
      */
-    private function getJWKS()
+    private function getJWKSParseKeySet()
     {
         if (!$this->certificateCache) {
             $this->certificateCache = HttpClient::get(ENDPOINT_CERTS);
         }
 
-        return $this->certificateCache->keys;
+        return JWK::parseKeySet($this->certificateCache->keys);
     }
 
     /**
@@ -255,7 +255,7 @@ class Client
             try {
                 if ($token->accessToken) {
                     $this->logger->debug('access token is in storage. verifying...');
-                    JWT::decode($token->accessToken, JWK::parseKeySet($this->getJWKS()));
+                    JWT::decode($token->accessToken, $this->getJWKSParseKeySet());
                 } else {
                     $this->logger->debug('access token cannot be found. refreshing...');
                     $shouldRefresh = true;
@@ -296,7 +296,7 @@ class Client
     private function setTokenOnStorage(Token $token)
     {
         try {
-            $decodedToken = JWT::decode($token->idToken, JWK::parseKeySet($this->getJWKS()));
+            $decodedToken = JWT::decode($token->idToken, $this->getJWKSParseKeySet());
             $this->authStorage->set($token, $decodedToken->ctc_id);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
@@ -313,7 +313,7 @@ class Client
     private function getTokenFromStorage($idToken)
     {
         try {
-            $decodedToken = JWT::decode($idToken, JWK::parseKeySet($this->getJWKS()));
+            $decodedToken = JWT::decode($idToken, $this->getJWKSParseKeySet());
             return $this->authStorage->getByCtcId($decodedToken->ctc_id);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
