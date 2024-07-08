@@ -122,12 +122,13 @@ class Client
     }
 
     /**
-     * @param string $idToken
+     * returns the anonymous consumer data for the connected community user if any
      * @return AnonymousConsumerData|null
      */
-    public function getAnonymousConsumerData($idToken)
+    public function getConnectedConsumerAnonymousData()
     {
         try {
+            $idToken = $this->getIdentityCookie();
             $accessToken = $this->getOrRefreshAccessToken($idToken);
 
             if (!$accessToken) {
@@ -343,6 +344,14 @@ class Client
         if ($actionType === ActionType::DISCONNECT) {
             $this->disconnect();
         }
+    }
+
+    /**
+     * @return string
+     */
+    private function getIdentityCookie()
+    {
+        return $_COOKIE[self::$identityCookie];
     }
 
     /**
