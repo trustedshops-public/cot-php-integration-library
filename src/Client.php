@@ -4,10 +4,6 @@ namespace COT;
 
 use Exception;
 use Firebase\JWT\ExpiredException;
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
-use phpseclib3\Crypt\PublicKeyLoader;
-use phpseclib3\Math\BigInteger;
 
 use COT\Logger;
 use COT\HttpClient;
@@ -17,6 +13,9 @@ use COT\ActionType;
 use COT\AnonymousConsumerData;
 use COT\Exception\UnexpectedErrorException;
 use COT\Exception\RequiredParameterMissingException;
+use COT\Util\EncryptionUtils;
+use COT\Util\JWTKUtils;
+use COT\Util\PKCEUtils;
 
 if (!defined('URL_REALM')) {
     define('URL_REALM', 'https://auth-qa.trustedshops.com/auth/realms/myTS-QA');
@@ -168,10 +167,22 @@ class Client
     {
         if (isset($_COOKIE[self::$identityCookie])) {
             $idToken = $_COOKIE[self::$identityCookie];
-            $decodedToken = $this->decodeToken($idToken, false);
+            $decodedToken = JWTKUtils::decodeToken($this->getJWK(), $idToken, false);
             $this->authStorage->remove($decodedToken->ctc_id);
             $this->removeIdentityCookie();
         }
+    }
+
+    /**
+     * @return object
+     */
+    private function getJWK()
+    {
+        if (!$this->certificateCache) {
+            $this->certificateCache = HttpClient::get(ENDPOINT_CERTS);
+        }
+
+        return $this->certificateCache;
     }
 
     /**
@@ -227,43 +238,6 @@ class Client
     }
 
     /**
-     * @param string $token - token to decode
-     * @param bool $validateExp - if true, validates expiration
-     * @return object
-     */
-    private function decodeToken($token, $validateExp = true)
-    {
-        if ($this->certificateCache === null) {
-            $this->certificateCache = HttpClient::get(ENDPOINT_CERTS);
-        }
-
-        $key = $this->certificateCache->keys[0];
-        $pem = $this->jwkToPem($key);
-
-        //TODO: find a way to validate token without validating exp
-        if (!$validateExp) {
-            $tks = explode('.', $token);
-            return JWT::jsonDecode(JWT::urlsafeB64Decode($tks[1]));
-        }
-
-        return JWT::decode($token, new Key($pem, $key->alg));
-    }
-
-    /**
-     * @param object $jwk
-     * @return string
-     */
-    private function jwkToPem($jwk)
-    {
-        $n = new BigInteger(base64_decode(strtr($jwk->n, '-_', '+/')), 256);
-        $e = new BigInteger(base64_decode(strtr($jwk->e, '-_', '+/')), 256);
-
-        $publicKey = PublicKeyLoader::load(['n' => $n, 'e' => $e]);
-
-        return $publicKey->toString('PKCS8');
-    }
-
-    /**
      * @param string $idToken - id token to get or refresh access token
      * @return string|null
      */
@@ -277,7 +251,7 @@ class Client
             try {
                 if ($token->accessToken) {
                     $this->logger->debug('access token is in storage. verifying...');
-                    $this->decodeToken($token->accessToken);
+                    JWTKUtils::decodeToken($this->getJWK(), $token->accessToken);
                 } else {
                     $this->logger->debug('access token cannot be found. refreshing...');
                     $shouldRefresh = true;
@@ -318,7 +292,7 @@ class Client
     private function setTokenOnStorage(Token $token)
     {
         try {
-            $decodedToken = $this->decodeToken($token->idToken, false);
+            $decodedToken = JWTKUtils::decodeToken($this->getJWK(), $token->idToken, false);
             $this->authStorage->set($token, $decodedToken->ctc_id);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
@@ -335,10 +309,8 @@ class Client
     private function getTokenFromStorage($idToken)
     {
         try {
-            $decodedToken = $this->decodeToken($idToken, false);
-            $ctcId = $decodedToken->ctc_id;
-            $cotAuth = $this->authStorage->getByCtcId($ctcId);
-            return $cotAuth ? $cotAuth->toToken() : null;
+            $decodedToken = JWTKUtils::decodeToken($this->getJWK(), $idToken, false);
+            return $this->authStorage->getByCtcId($decodedToken->ctc_id);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
         } catch (Exception $ex) {
@@ -389,30 +361,13 @@ class Client
     }
 
     /**
-     * @return string
-     */
-    private function generateCodeVerifier()
-    {
-        return rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
-    }
-
-    /**
-     * @param string $codeVerifier - code verifier to generate challenge
-     * @return string
-     */
-    private function generateCodeChallenge($codeVerifier)
-    {
-        return rtrim(strtr(base64_encode(hash('sha256', $codeVerifier, true)), '+/', '-_'), '=');
-    }
-
-    /**
      * @param string $codeVerifier - code verifier to set in cookie
      * @param string $codeChallenge - code challenge to set in cookie
      * @return string
      */
     private function setCodeVerifierAndChallengeCookie($codeVerifier, $codeChallenge)
     {
-        $encryptedCodeVerifier = $this->encryptValue($this->clientSecret, $codeVerifier);
+        $encryptedCodeVerifier = EncryptionUtils::encryptValue($this->clientSecret, $codeVerifier);
         setcookie(self::$codeVerifierCookie, $encryptedCodeVerifier, 0, '/', $_SERVER['HTTP_HOST'], true, true);
         setcookie(self::$codeChallengeCookie, $codeChallenge, 0, '/', $_SERVER['HTTP_HOST'], true, false);
     }
@@ -423,8 +378,8 @@ class Client
     private function refreshPKCE($force = false)
     {
         if ($force || !isset($_COOKIE[self::$codeVerifierCookie]) || !isset($_COOKIE[self::$codeChallengeCookie])) {
-            $codeVerifier = $this->generateCodeVerifier();
-            $codeChallenge = $this->generateCodeChallenge($codeVerifier);
+            $codeVerifier = PKCEUtils::generateCodeVerifier();
+            $codeChallenge = PKCEUtils::generateCodeChallenge($codeVerifier);
             $this->setCodeVerifierAndChallengeCookie($codeVerifier, $codeChallenge);
         }
     }
@@ -437,32 +392,9 @@ class Client
         $encryptedCodeVerifier = $_COOKIE[self::$codeVerifierCookie];
 
         if ($encryptedCodeVerifier) {
-            return $this->decryptValue($this->clientSecret, $encryptedCodeVerifier);
+            return EncryptionUtils::decryptValue($this->clientSecret, $encryptedCodeVerifier);
         }
 
         return null;
-    }
-
-    /**
-     * @param string $key - key used for encryption
-     * @param string $value - value to encrypt
-     * @return string
-     */
-    private function encryptValue($key, $value)
-    {
-        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc'));
-        $encrypted = openssl_encrypt($value, 'aes-256-cbc', $key, 0, $iv);
-        return base64_encode($encrypted . '::' . $iv);
-    }
-
-    /**
-     * @param string $key - key used for encryption
-     * @param string $value - value to decrypt
-     * @return string
-     */
-    private function decryptValue($key, $value)
-    {
-        list($encryptedData, $iv) = explode('::', base64_decode($value), 2);
-        return openssl_decrypt($encryptedData, 'aes-256-cbc', $key, 0, $iv);
     }
 }
