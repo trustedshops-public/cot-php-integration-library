@@ -115,12 +115,13 @@ class Client
         $this->logger = new Logger();
 
         $this->httpClient = new GuzzleHttpClient();
+        $httpClient = new HttpClientWrapper($this->httpClient);
         $httpFactory = new HttpFactory();
         $cacheItemPool = CacheManager::getInstance('files');
 
         $this->cachedKeySet = new CachedKeySet(
             ENDPOINT_CERTS,
-            $this->httpClient,
+            $httpClient,
             $httpFactory,
             $cacheItemPool,
             3600,
