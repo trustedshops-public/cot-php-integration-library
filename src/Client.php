@@ -11,7 +11,6 @@ use Firebase\JWT\JWT;
 use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\Client as GuzzleHttpClient;
 use Phpfastcache\CacheManager;
-use Psr\Http\Client\ClientInterface;
 
 use TRSTD\COT\Logger;
 use TRSTD\COT\AuthStorage;
@@ -80,7 +79,7 @@ class Client
     private $cachedKeySet;
 
     /**
-     * @var ClientInterface
+     * @var GuzzleHttpClient
      */
     private $httpClient;
 
