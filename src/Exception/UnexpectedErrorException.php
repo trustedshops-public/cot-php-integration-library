@@ -1,23 +1,18 @@
 <?php
 
-namespace COT\Exception;
+namespace TRSTD\COT\Exception;
 
 use Exception;
 use RuntimeException;
 
-/**
- * Class UnexpectedErrorException
- *
- * @package COT
- */
 final class UnexpectedErrorException extends RuntimeException
 {
     /**
      * UnexpectedErrorException constructor.
      *
-     * @param string $message
-     * @param int $code
-     * @param Exception|null $previous
+     * @param string $message The message to log
+     * @param int $code The error code
+     * @param Exception|null $previous The previous exception
      */
     public function __construct($message = 'Unexpected error', $code = 0, Exception $previous = null)
     {

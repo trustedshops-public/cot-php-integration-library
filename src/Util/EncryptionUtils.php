@@ -1,12 +1,12 @@
 <?php
 
-namespace COT\Util;
+namespace TRSTD\COT\Util;
 
 final class EncryptionUtils
 {
     /**
-     * @param string $key - key used for encryption
-     * @param string $value - value to encrypt
+     * @param string $key key used for encryption
+     * @param string $value value to encrypt
      * @return string
      */
     public static function encryptValue($key, $value)
@@ -17,8 +17,8 @@ final class EncryptionUtils
     }
 
     /**
-     * @param string $key - key used for encryption
-     * @param string $value - value to decrypt
+     * @param string $key key used for encryption
+     * @param string $value value to decrypt
      * @return string
      */
     public static function decryptValue($key, $value)

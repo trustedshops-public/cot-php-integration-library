@@ -1,11 +1,7 @@
 <?php
 
-namespace COT;
+namespace TRSTD\COT;
 
-/**
- * Class Logger
- * @package COT
- */
 class Logger
 {
     /**
@@ -24,7 +20,7 @@ class Logger
     }
 
     /**
-     * @param string $message - The message to log
+     * @param string $message The message to log
      */
     public function error($message)
     {
@@ -32,7 +28,7 @@ class Logger
     }
 
     /**
-     * @param string $message - The message to log
+     * @param string $message The message to log
      */
     public function warning($message)
     {
@@ -40,7 +36,7 @@ class Logger
     }
 
     /**
-     * @param string $message - The message to log
+     * @param string $message The message to log
      */
     public function info($message)
     {
@@ -48,7 +44,7 @@ class Logger
     }
 
     /**
-     * @param string $message - The message to log
+     * @param string $message The message to log
      */
     public function debug($message)
     {

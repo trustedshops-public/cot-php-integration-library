@@ -1,27 +1,6 @@
 <?php
 
-// {
-//     "statistics": {
-//         "averageOrderValue": 1258.95,
-//         "maxOrderValue": 3409.9,
-//         "orderVolumeLastMonth": 0,
-//         "orderVolumeLastYear": 7553.7,
-//         "shopsStats": {
-//             "X3C0356AC8ACBFC4A364871034758E0DC": {}
-//         },
-//         "calculatedAt": "2024-07-05T14:28:05Z"
-//     },
-//     "membershipInfo": {
-//         "memberships": [
-//             {
-//                 "type": "BASIC",
-//                 "startDate": "2022-02-11T15:29:54Z"
-//             }
-//         ]
-//     }
-// }
-
-namespace COT;
+namespace TRSTD\COT;
 
 class AnonymousConsumerData
 {

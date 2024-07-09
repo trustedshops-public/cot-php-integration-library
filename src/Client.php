@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace COT;
+namespace TRSTD\COT;
 
 use Exception;
 use Firebase\JWT\ExpiredException;
@@ -10,19 +10,18 @@ use Firebase\JWT\CachedKeySet;
 use Firebase\JWT\JWT;
 use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\Client as GuzzleHttpClient;
-use Symfony\Component\HttpClient\HttpClient;
 use Phpfastcache\CacheManager;
 use Psr\Http\Client\ClientInterface;
 
-use COT\Logger;
-use COT\AuthStorage;
-use COT\Token;
-use COT\ActionType;
-use COT\AnonymousConsumerData;
-use COT\Exception\UnexpectedErrorException;
-use COT\Exception\RequiredParameterMissingException;
-use COT\Util\EncryptionUtils;
-use COT\Util\PKCEUtils;
+use TRSTD\COT\Logger;
+use TRSTD\COT\AuthStorage;
+use TRSTD\COT\Token;
+use TRSTD\COT\ActionType;
+use TRSTD\COT\AnonymousConsumerData;
+use TRSTD\COT\Exception\UnexpectedErrorException;
+use TRSTD\COT\Exception\RequiredParameterMissingException;
+use TRSTD\COT\Util\EncryptionUtils;
+use TRSTD\COT\Util\PKCEUtils;
 
 if (!defined('URL_REALM')) {
     define('URL_REALM', 'https://auth-qa.trustedshops.com/auth/realms/myTS-QA');
@@ -86,11 +85,11 @@ class Client
     private $httpClient;
 
     /**
-     * @param string $tsId - TS ID
-     * @param string $clientId - client ID
-     * @param string $clientSecret - client secret
-     * @param AuthStorage $authStorage - auth storage instance
-     * @throws RequiredParameterMissingException - if any required parameter is missing
+     * @param string $tsId TS ID
+     * @param string $clientId client ID
+     * @param string $clientSecret client secret
+     * @param AuthStorage $authStorage auth storage instance
+     * @throws RequiredParameterMissingException if any required parameter is missing
      */
     public function __construct($tsId, $clientId, $clientSecret, $authStorage)
     {
@@ -116,7 +115,7 @@ class Client
         $this->authStorage = $authStorage;
         $this->logger = new Logger();
 
-        $this->httpClient = HttpClient::create();
+        $this->httpClient = new GuzzleHttpClient();
         $httpFactory = new HttpFactory();
         $cacheItemPool = CacheManager::getInstance('files');
 
@@ -200,7 +199,7 @@ class Client
     }
 
     /**
-     * @param string $code - code to get token
+     * @param string $codecode to get token
      * @return Token|null
      */
     private function getToken($code)
@@ -252,7 +251,7 @@ class Client
     }
 
     /**
-     * @param string $idToken - id token to get or refresh access token
+     * @param string $idTokenid token to get or refresh access token
      * @return string|null
      */
     private function getOrRefreshAccessToken($idToken)
@@ -301,7 +300,7 @@ class Client
     }
 
     /**
-     * @param Token $token - token to set in storage
+     * @param Token $token token to set in storage
      */
     private function setTokenOnStorage(Token $token)
     {
@@ -317,7 +316,7 @@ class Client
     }
 
     /**
-     * @param string $idToken - id token to get token from storage
+     * @param string $idToken id token to get token from storage
      * @return Token|null
      */
     private function getTokenFromStorage($idToken)
@@ -336,7 +335,7 @@ class Client
     }
 
     /**
-     * @param string $code - code to handle
+     * @param string $code code to handle
      */
     private function handleAuthCode($code)
     {
@@ -348,7 +347,7 @@ class Client
     }
 
     /**
-     * @param string $actionType - action type to handle
+     * @param string $actionType action type to handle
      */
     private function handleAction($actionType)
     {
@@ -366,7 +365,7 @@ class Client
     }
 
     /**
-     * @param string $idToken - id token to set in cookie
+     * @param string $idToken id token to set in cookie
      */
     private function setIdentityCookie($idToken)
     {
@@ -374,8 +373,8 @@ class Client
     }
 
     /**
-     * @param string $codeVerifier - code verifier to set in cookie
-     * @param string $codeChallenge - code challenge to set in cookie
+     * @param string $codeVerifier code verifier to set in cookie
+     * @param string $codeChallenge code challenge to set in cookie
      */
     private function removeIdentityCookie()
     {
@@ -383,8 +382,8 @@ class Client
     }
 
     /**
-     * @param string $codeVerifier - code verifier to set in cookie
-     * @param string $codeChallenge - code challenge to set in cookie
+     * @param string $codeVerifier code verifier to set in cookie
+     * @param string $codeChallenge code challenge to set in cookie
      * @return string
      */
     private function setCodeVerifierAndChallengeCookie($codeVerifier, $codeChallenge)
@@ -395,7 +394,7 @@ class Client
     }
 
     /**
-     * @param bool $force - if true, refreshes the PKCE even if it is already set
+     * @param bool $force if true, refreshes the PKCE even if it is already set
      */
     private function refreshPKCE($force = false)
     {

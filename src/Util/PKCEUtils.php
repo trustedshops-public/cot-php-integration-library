@@ -1,6 +1,6 @@
 <?php
 
-namespace COT\Util;
+namespace TRSTD\COT\Util;
 
 final class PKCEUtils
 {
@@ -13,7 +13,7 @@ final class PKCEUtils
     }
 
     /**
-     * @param string $codeVerifier - code verifier to generate challenge
+     * @param string $codeVerifier code verifier to generate challenge
      * @return string
      */
     public static function generateCodeChallenge($codeVerifier)

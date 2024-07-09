@@ -14,16 +14,15 @@
     "require": {
         "php": ">=7.2",
         "firebase/php-jwt": "^6.10",
-        "phpseclib/phpseclib": "^3",
+        "phpseclib/phpseclib": "^3.0",
         "monolog/monolog": "^2.9",
         "phpfastcache/phpfastcache": "^8.1",
         "guzzlehttp/guzzle": "^7.8",
-        "paragonie/sodium_compat": "^1.21",
-        "symfony/http-client": "^5.4"
+        "paragonie/sodium_compat": "^1.21"
     },
     "autoload": {
         "psr-4": {
-            "COT\\": "src/"
+            "TRSTD\\COT\\": "src/"
         }
     },
     "config": {
