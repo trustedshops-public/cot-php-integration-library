@@ -144,7 +144,9 @@ class Client
                 'Authorization: Bearer ' . $accessToken,
             ];
 
-            return $this->resourceHttpClient->get("/anonymous-data" . ($this->tsId ? "?shopId=" . $this->tsId : ""), $headers);
+            $response = $this->resourceHttpClient->get("/anonymous-data" . ($this->tsId ? "?shopId=" . $this->tsId : ""), ['headers' => $headers]);
+            
+            return json_decode($response->getBody()->getContents());
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
             return null;
@@ -199,7 +201,8 @@ class Client
             'code_verifier' => $this->getCodeVerifierCookie(),
         ];
 
-        $responseJson = $this->authHttpClient->post("/token", $headers, $data);
+        $response = $this->authHttpClient->post("/token", ['headers' => $headers, 'body' => $data]);
+        $responseJson = json_decode($response->getBody()->getContents());
         if (!$responseJson || isset($responseJson->error)) {
             return null;
         }
@@ -224,7 +227,8 @@ class Client
             'refresh_token' => $refreshToken,
         ];
 
-        $responseJson = $this->authHttpClient->post("/token", $headers, $data);
+        $response = $this->authHttpClient->post("/token", ['headers' => $headers, 'body' => $data]);
+        $responseJson = json_decode($response->getBody()->getContents());
         if (!$responseJson || isset($responseJson->error)) {
             return null;
         }
@@ -329,16 +333,7 @@ class Client
     private function getJWKS()
     {
         $response = $this->authHttpClient->get("/certs");
-
-        if (!$response) {
-            return null;
-        }
-
         $responseJson = json_decode($response->getBody()->getContents());
-
-        if (!$responseJson) {
-            return null;
-        }
 
         return JWK::parseKeySet($responseJson->keys);
     }
