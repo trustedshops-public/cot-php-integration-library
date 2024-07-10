@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace TRSTD\COT;
 
 use Exception;
@@ -110,11 +108,13 @@ class Client
         $this->authHttpClient = new GuzzleHttpClient([
             'base_uri' => AUTH_SERVER_BASE_URI,
             'timeout' => 5.0,
+            'allow_redirects' => false,
         ]);
 
         $this->resourceHttpClient = new GuzzleHttpClient([
             'base_uri' => RESOURCE_SERVER_BASE_URI,
             'timeout' => 5.0,
+            'allow_redirects' => false,
         ]);
 
         $httpFactory = new HttpFactory();
