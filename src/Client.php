@@ -22,24 +22,12 @@ use TRSTD\COT\Exception\RequiredParameterMissingException;
 use TRSTD\COT\Util\EncryptionUtils;
 use TRSTD\COT\Util\PKCEUtils;
 
-if (!defined('URL_REALM')) {
-    define('URL_REALM', 'https://auth-qa.trustedshops.com/auth/realms/myTS-QA');
+if (!defined('AUTH_SERVER_BASE_URI')) {
+    define('AUTH_SERVER_BASE_URI', 'https://auth-qa.trustedshops.com/auth/realms/myTS-QA/protocol/openid-connect');
 }
 
-if (!defined('PROTOCOL')) {
-    define('PROTOCOL', 'protocol/openid-connect');
-}
-
-if (!defined('ENDPOINT_TOKEN')) {
-    define('ENDPOINT_TOKEN', URL_REALM . '/' . PROTOCOL . '/token');
-}
-
-if (!defined('ENDPOINT_CERTS')) {
-    define('ENDPOINT_CERTS', URL_REALM . '/' . PROTOCOL . '/certs');
-}
-
-if (!defined('ENDPOINT_ANONYMOUS_DATA')) {
-    define('ENDPOINT_ANONYMOUS_DATA', 'https://scoped-cns-data.consumer-account-test.trustedshops.com/api/v1/anonymous-data');
+if (!defined('RESOURCE_SERVER_BASE_URI')) {
+    define('RESOURCE_SERVER_BASE_URI', 'https://scoped-cns-data.consumer-account-test.trustedshops.com/api/v1');
 }
 
 class Client
@@ -81,7 +69,12 @@ class Client
     /**
      * @var GuzzleHttpClient
      */
-    private $httpClient;
+    private $authHttpClient;
+
+    /**
+     * @var GuzzleHttpClient
+     */
+    private $resourceHttpClient;
 
     /**
      * @param string $tsId TS ID
@@ -114,14 +107,22 @@ class Client
         $this->authStorage = $authStorage;
         $this->logger = new Logger();
 
-        $this->httpClient = new GuzzleHttpClient();
-        $httpClient = new HttpClientWrapper($this->httpClient);
+        $this->authHttpClient = new GuzzleHttpClient([
+            'base_uri' => AUTH_SERVER_BASE_URI,
+            'timeout' => 5.0,
+        ]);
+
+        $this->resourceHttpClient = new GuzzleHttpClient([
+            'base_uri' => RESOURCE_SERVER_BASE_URI,
+            'timeout' => 5.0,
+        ]);
+
         $httpFactory = new HttpFactory();
         $cacheItemPool = CacheManager::getInstance('files');
 
         $this->cachedKeySet = new CachedKeySet(
-            ENDPOINT_CERTS,
-            $httpClient,
+            "/certs",
+            $this->authHttpClient,
             $httpFactory,
             $cacheItemPool,
             3600,
@@ -162,7 +163,7 @@ class Client
                 'Authorization: Bearer ' . $accessToken,
             ];
 
-            return $this->httpClient->get(ENDPOINT_ANONYMOUS_DATA . ($this->tsId ? "?shopId=" . $this->tsId : ""), $headers);
+            return $this->resourceHttpClient->get("/anonymous-data" . ($this->tsId ? "?shopId=" . $this->tsId : ""), $headers);
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
             return null;
@@ -217,7 +218,7 @@ class Client
             'code_verifier' => $this->getCodeVerifierCookie(),
         ];
 
-        $responseJson = $this->httpClient->post(ENDPOINT_TOKEN, $headers, $data);
+        $responseJson = $this->authHttpClient->post("/token", $headers, $data);
         if (!$responseJson || isset($responseJson->error)) {
             return null;
         }
@@ -242,7 +243,7 @@ class Client
             'refresh_token' => $refreshToken,
         ];
 
-        $responseJson = $this->httpClient->post(ENDPOINT_TOKEN, $headers, $data);
+        $responseJson = $this->authHttpClient->post("/token", $headers, $data);
         if (!$responseJson || isset($responseJson->error)) {
             return null;
         }
