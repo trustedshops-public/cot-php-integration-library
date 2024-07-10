@@ -4,11 +4,9 @@ namespace TRSTD\COT;
 
 use Exception;
 use Firebase\JWT\ExpiredException;
-use Firebase\JWT\CachedKeySet;
 use Firebase\JWT\JWT;
-use GuzzleHttp\Psr7\HttpFactory;
+use Firebase\JWT\JWK;
 use GuzzleHttp\Client as GuzzleHttpClient;
-use Phpfastcache\CacheManager;
 
 use TRSTD\COT\Logger;
 use TRSTD\COT\AuthStorage;
@@ -58,11 +56,6 @@ class Client
      * @var Logger
      */
     private $logger;
-
-    /**
-     * @var CachedKeySet
-     */
-    private $cachedKeySet;
 
     /**
      * @var GuzzleHttpClient
@@ -116,18 +109,6 @@ class Client
             'timeout' => 5.0,
             'allow_redirects' => false,
         ]);
-
-        $httpFactory = new HttpFactory();
-        $cacheItemPool = CacheManager::getInstance('files');
-
-        $this->cachedKeySet = new CachedKeySet(
-            "/certs",
-            $this->authHttpClient,
-            $httpFactory,
-            $cacheItemPool,
-            3600,
-            true
-        );
     }
 
     /**
@@ -193,7 +174,7 @@ class Client
     {
         if (isset($_COOKIE[self::$identityCookie])) {
             $idToken = $_COOKIE[self::$identityCookie];
-            $decodedToken = JWT::decode($idToken, $this->cachedKeySet);
+            $decodedToken = $this->decodeToken($idToken);
             $this->authStorage->remove($decodedToken->ctc_id);
             $this->removeIdentityCookie();
         }
@@ -265,7 +246,7 @@ class Client
             try {
                 if ($token->accessToken) {
                     $this->logger->debug('access token is in storage. verifying...');
-                    JWT::decode($token->accessToken, $this->cachedKeySet);
+                    $this->decodeToken($token->accessToken);
                 } else {
                     $this->logger->debug('access token cannot be found. refreshing...');
                     $shouldRefresh = true;
@@ -306,7 +287,7 @@ class Client
     private function setTokenOnStorage(Token $token)
     {
         try {
-            $decodedToken = JWT::decode($token->idToken, $this->cachedKeySet);
+            $decodedToken = $this->decodeToken($token->idToken);
             $this->authStorage->set($token, $decodedToken->ctc_id);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
@@ -323,7 +304,7 @@ class Client
     private function getTokenFromStorage($idToken)
     {
         try {
-            $decodedToken = JWT::decode($idToken, $this->cachedKeySet);
+            $decodedToken = $this->decodeToken($idToken);
             return $this->authStorage->getByCtcId($decodedToken->ctc_id);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
@@ -333,6 +314,33 @@ class Client
         }
 
         return null;
+    }
+
+    private function decodeToken($token)
+    {
+        try {
+            return JWT::decode($token, $this->getJWKS());
+        } catch (Exception $ex) {
+            $this->logger->error($ex->getMessage());
+            throw new UnexpectedErrorException('Unexpected error occurred: ' . $ex->getMessage(), 0, $ex);
+        }
+    }
+
+    private function getJWKS()
+    {
+        $response = $this->authHttpClient->get("/certs");
+
+        if (!$response) {
+            return null;
+        }
+
+        $responseJson = json_decode($response->getBody()->getContents());
+
+        if (!$responseJson) {
+            return null;
+        }
+
+        return JWK::parseKeySet($responseJson->keys);
     }
 
     /**
