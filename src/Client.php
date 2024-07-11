@@ -6,7 +6,8 @@ use Exception;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
-use GuzzleHttp\Client as GuzzleHttpClient;
+use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\HttpClient\RetryableHttpClient;
 
 use TRSTD\COT\Logger;
 use TRSTD\COT\AuthStorage;
@@ -19,11 +20,11 @@ use TRSTD\COT\Util\EncryptionUtils;
 use TRSTD\COT\Util\PKCEUtils;
 
 if (!defined('AUTH_SERVER_BASE_URI')) {
-    define('AUTH_SERVER_BASE_URI', 'https://auth-qa.trustedshops.com/auth/realms/myTS-QA/protocol/openid-connect');
+    define('AUTH_SERVER_BASE_URI', 'https://auth-qa.trustedshops.com/auth/realms/myTS-QA/protocol/openid-connect/');
 }
 
 if (!defined('RESOURCE_SERVER_BASE_URI')) {
-    define('RESOURCE_SERVER_BASE_URI', 'https://scoped-cns-data.consumer-account-test.trustedshops.com/api/v1');
+    define('RESOURCE_SERVER_BASE_URI', 'https://scoped-cns-data.consumer-account-test.trustedshops.com/api/v1/');
 }
 
 class Client
@@ -58,12 +59,12 @@ class Client
     private $logger;
 
     /**
-     * @var GuzzleHttpClient
+     * @var RetryableHttpClient
      */
     private $authHttpClient;
 
     /**
-     * @var GuzzleHttpClient
+     * @var RetryableHttpClient
      */
     private $resourceHttpClient;
 
@@ -98,17 +99,13 @@ class Client
         $this->authStorage = $authStorage;
         $this->logger = new Logger();
 
-        $this->authHttpClient = new GuzzleHttpClient([
+        $this->authHttpClient = new RetryableHttpClient(HttpClient::create()->withOptions([
             'base_uri' => AUTH_SERVER_BASE_URI,
-            'timeout' => 5.0,
-            'allow_redirects' => false,
-        ]);
+        ]));
 
-        $this->resourceHttpClient = new GuzzleHttpClient([
+        $this->resourceHttpClient = new RetryableHttpClient(HttpClient::create()->withOptions([
             'base_uri' => RESOURCE_SERVER_BASE_URI,
-            'timeout' => 5.0,
-            'allow_redirects' => false,
-        ]);
+        ]));
     }
 
     /**
@@ -144,9 +141,13 @@ class Client
                 'Authorization: Bearer ' . $accessToken,
             ];
 
-            $response = $this->resourceHttpClient->get("/anonymous-data" . ($this->tsId ? "?shopId=" . $this->tsId : ""), ['headers' => $headers]);
-            
-            return json_decode($response->getBody()->getContents());
+            $response = $this->resourceHttpClient->request("GET", "anonymous-data" . ($this->tsId ? "?shopId=" . $this->tsId : ""), ['headers' => $headers]);
+
+            if (200 !== $response->getStatusCode()) {
+                return null;
+            }
+
+            return json_decode($response->getContent());
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
             return null;
@@ -201,8 +202,13 @@ class Client
             'code_verifier' => $this->getCodeVerifierCookie(),
         ];
 
-        $response = $this->authHttpClient->post("/token", ['headers' => $headers, 'body' => $data]);
-        $responseJson = json_decode($response->getBody()->getContents());
+        $response = $this->authHttpClient->request("POST", "token", ['headers' => $headers, 'body' => $data]);
+
+        if (201 !== $response->getStatusCode()) {
+            return null;
+        }
+
+        $responseJson = json_decode($response->getContent());
         if (!$responseJson || isset($responseJson->error)) {
             return null;
         }
@@ -227,8 +233,13 @@ class Client
             'refresh_token' => $refreshToken,
         ];
 
-        $response = $this->authHttpClient->post("/token", ['headers' => $headers, 'body' => $data]);
-        $responseJson = json_decode($response->getBody()->getContents());
+        $response = $this->authHttpClient->request("POST", "token", ['headers' => $headers, 'body' => $data]);
+
+        if (201 !== $response->getStatusCode()) {
+            return null;
+        }
+
+        $responseJson = json_decode($response->getContent());
         if (!$responseJson || isset($responseJson->error)) {
             return null;
         }
@@ -332,8 +343,13 @@ class Client
 
     private function getJWKS()
     {
-        $response = $this->authHttpClient->get("/certs");
-        $responseJson = json_decode($response->getBody()->getContents());
+        $response = $this->authHttpClient->request("GET", "certs");
+
+        if (200 !== $response->getStatusCode()) {
+            return null;
+        }
+
+        $responseJson = json_decode($response->getContent());
 
         return JWK::parseKeySet($responseJson->keys);
     }
