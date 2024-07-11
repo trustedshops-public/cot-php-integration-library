@@ -6,8 +6,13 @@ use Exception;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
+
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\HttpClient\RetryableHttpClient;
+use Phpfastcache\CacheManager;
+use Phpfastcache\Core\Pool\ExtendedCacheItemPoolInterface;
+use Phpfastcache\Config\ConfigurationOption;
 
 use TRSTD\COT\Logger;
 use TRSTD\COT\AuthStorage;
@@ -26,6 +31,10 @@ if (!defined('AUTH_SERVER_BASE_URI')) {
 if (!defined('RESOURCE_SERVER_BASE_URI')) {
     define('RESOURCE_SERVER_BASE_URI', 'https://scoped-cns-data.consumer-account-test.trustedshops.com/api/v1/');
 }
+
+CacheManager::setDefaultConfig(new ConfigurationOption([
+    "path" => __DIR__ . "/cache"
+]));
 
 class Client
 {
@@ -59,14 +68,19 @@ class Client
     private $logger;
 
     /**
-     * @var RetryableHttpClient
+     * @var HttpClientInterface
      */
     private $authHttpClient;
 
     /**
-     * @var RetryableHttpClient
+     * @var HttpClientInterface
      */
     private $resourceHttpClient;
+
+    /**
+     * @var ExtendedCacheItemPoolInterface
+     */
+    private $cacheItemPool;
 
     /**
      * @param string $tsId TS ID
@@ -75,7 +89,7 @@ class Client
      * @param AuthStorage $authStorage auth storage instance
      * @throws RequiredParameterMissingException if any required parameter is missing
      */
-    public function __construct($tsId, $clientId, $clientSecret, $authStorage)
+    public function __construct($tsId, $clientId, $clientSecret, AuthStorage $authStorage)
     {
         if (!$tsId) {
             throw new RequiredParameterMissingException('TS ID is required.');
@@ -99,13 +113,10 @@ class Client
         $this->authStorage = $authStorage;
         $this->logger = new Logger();
 
-        $this->authHttpClient = new RetryableHttpClient(HttpClient::create()->withOptions([
-            'base_uri' => AUTH_SERVER_BASE_URI,
-        ]));
+        $this->authHttpClient = HttpClient::createForBaseUri(AUTH_SERVER_BASE_URI);
+        $this->resourceHttpClient = HttpClient::createForBaseUri(RESOURCE_SERVER_BASE_URI);
 
-        $this->resourceHttpClient = new RetryableHttpClient(HttpClient::create()->withOptions([
-            'base_uri' => RESOURCE_SERVER_BASE_URI,
-        ]));
+        $this->cacheItemPool = CacheManager::getInstance('files');
     }
 
     /**
@@ -136,18 +147,22 @@ class Client
                 return null;
             }
 
+            $cachedConsumerAnonymousDataItem = $this->cacheItemPool->getItem('consumer_anonymous_data');
+            if ($cachedConsumerAnonymousDataItem->isHit()) {
+                return $cachedConsumerAnonymousDataItem->get();
+            }
+
             $headers = [
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . $accessToken,
             ];
 
             $response = $this->resourceHttpClient->request("GET", "anonymous-data" . ($this->tsId ? "?shopId=" . $this->tsId : ""), ['headers' => $headers]);
+            $consumerAnonymousData = json_decode($response->getContent());
+            $cachedConsumerAnonymousDataItem->set($consumerAnonymousData)->expiresAfter(5);
+            $this->cacheItemPool->save($cachedConsumerAnonymousDataItem);
 
-            if (200 !== $response->getStatusCode()) {
-                return null;
-            }
-
-            return json_decode($response->getContent());
+            return $consumerAnonymousData;
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
             return null;
@@ -177,14 +192,14 @@ class Client
     {
         if (isset($_COOKIE[self::$identityCookie])) {
             $idToken = $_COOKIE[self::$identityCookie];
-            $decodedToken = $this->decodeToken($idToken);
+            $decodedToken = $this->decodeToken($idToken, false);
             $this->authStorage->remove($decodedToken->ctc_id);
             $this->removeIdentityCookie();
         }
     }
 
     /**
-     * @param string $codecode to get token
+     * @param string $code code to get token
      * @return Token|null
      */
     private function getToken($code)
@@ -203,11 +218,6 @@ class Client
         ];
 
         $response = $this->authHttpClient->request("POST", "token", ['headers' => $headers, 'body' => $data]);
-
-        if (201 !== $response->getStatusCode()) {
-            return null;
-        }
-
         $responseJson = json_decode($response->getContent());
         if (!$responseJson || isset($responseJson->error)) {
             return null;
@@ -234,11 +244,6 @@ class Client
         ];
 
         $response = $this->authHttpClient->request("POST", "token", ['headers' => $headers, 'body' => $data]);
-
-        if (201 !== $response->getStatusCode()) {
-            return null;
-        }
-
         $responseJson = json_decode($response->getContent());
         if (!$responseJson || isset($responseJson->error)) {
             return null;
@@ -302,7 +307,7 @@ class Client
     private function setTokenOnStorage(Token $token)
     {
         try {
-            $decodedToken = $this->decodeToken($token->idToken);
+            $decodedToken = $this->decodeToken($token->idToken, false);
             $this->authStorage->set($token, $decodedToken->ctc_id);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
@@ -319,7 +324,7 @@ class Client
     private function getTokenFromStorage($idToken)
     {
         try {
-            $decodedToken = $this->decodeToken($idToken);
+            $decodedToken = $this->decodeToken($idToken, false);
             return $this->authStorage->getByCtcId($decodedToken->ctc_id);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
@@ -331,9 +336,14 @@ class Client
         return null;
     }
 
-    private function decodeToken($token)
+    private function decodeToken($token, $validateExp = true)
     {
         try {
+            if (!$validateExp) {
+                $tks = explode('.', $token);
+                return JWT::jsonDecode(JWT::urlsafeB64Decode($tks[1]));
+            }
+
             return JWT::decode($token, $this->getJWKS());
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
@@ -343,15 +353,18 @@ class Client
 
     private function getJWKS()
     {
-        $response = $this->authHttpClient->request("GET", "certs");
+        $cachedJWKSItem = $this->cacheItemPool->getItem('jwks');
 
-        if (200 !== $response->getStatusCode()) {
-            return null;
+        if (!$cachedJWKSItem->isHit()) {
+            $response = $this->authHttpClient->request("GET", "certs");
+            $jwks = json_decode($response->getContent(), true);
+            $this->cacheItemPool->getItem('jwks')->set($jwks)->expiresAfter(3600);
+            $this->cacheItemPool->save($cachedJWKSItem);
         }
 
-        $responseJson = json_decode($response->getContent());
+        $jwks = $cachedJWKSItem->get();
 
-        return JWK::parseKeySet($responseJson->keys);
+        return JWK::parseKeySet($jwks);
     }
 
     /**
