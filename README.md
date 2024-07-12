@@ -19,6 +19,8 @@ composer require trstd/cot-integration-library
 
 Here is a basic example of how to use the library:
 
+On backend side:
+
 ```php
 <?php
 
@@ -39,6 +41,13 @@ $client->handleCallback();
 
 // get anonymous consumer data for the current user
 $client->getAnonymousConsumerData();
+```
+
+On frontend side:
+
+```html
+<trstd-switch tsId="X1234567890123456789012345678901"></trstd-switch>
+<script />
 ```
 
 For more detailed examples, please refer to the `examples/` directory.
