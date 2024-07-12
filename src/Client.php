@@ -17,7 +17,7 @@ use Phpfastcache\Core\Pool\ExtendedCacheItemPoolInterface;
 use Phpfastcache\Config\ConfigurationOption;
 
 use TRSTD\COT\Logger;
-use TRSTD\COT\AuthStorage;
+use TRSTD\COT\AuthStorageInterface;
 use TRSTD\COT\Token;
 use TRSTD\COT\ActionType;
 use TRSTD\COT\AnonymousConsumerData;
@@ -52,7 +52,7 @@ class Client
     private const CONSUMER_ANONYMOUS_DATA_CACHE_TTL = 3600; // 1 hour
 
     /**
-     * @var AuthStorage
+     * @var AuthStorageInterface
      */
     private $authStorage;
 
@@ -95,10 +95,10 @@ class Client
      * @param string $tsId TS ID
      * @param string $clientId client ID
      * @param string $clientSecret client secret
-     * @param AuthStorage $authStorage auth storage instance
+     * @param AuthStorageInterface $authStorage auth storage to store tokens
      * @throws RequiredParameterMissingException if any required parameter is missing
      */
-    public function __construct($tsId, $clientId, $clientSecret, AuthStorage $authStorage)
+    public function __construct($tsId, $clientId, $clientSecret, AuthStorageInterface $authStorage)
     {
         if (!$tsId) {
             throw new RequiredParameterMissingException('TS ID is required.');
