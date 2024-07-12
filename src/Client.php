@@ -147,7 +147,7 @@ class Client
      * returns the anonymous consumer data for the connected community user if any
      * @return AnonymousConsumerData|null
      */
-    public function getConnectedConsumerAnonymousData()
+    public function getAnonymousConsumerData()
     {
         try {
             $idToken = $this->getIdentityCookie();
