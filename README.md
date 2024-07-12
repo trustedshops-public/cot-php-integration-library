@@ -2,13 +2,6 @@
 
 This library provides a comprehensive PHP interface for integrating with the Community of Trust (COT) platform, facilitating seamless interactions with its services.
 
-## Features
-
-- Authentication and token management
-- Handling of anonymous consumer data
-- Encryption and security utilities
-- Extensive logging capabilities
-
 ## Requirements
 
 - PHP >= 7.2
@@ -35,15 +28,15 @@ use TRSTD\COT\Client;
 
 // Initialize the client
 $client = new Client(
-    <TSID>,
-    <CLIENT_ID>,
-    <CLIENT_SECRET>,
-    <AUTH_STORAGE_INSTANCE> // It can be any storage option using AuthStorageInterface
+    <TSID>, // Trusted Shops ID - e.g. 'X1234567890123456789012345678901'
+    <CLIENT_ID>, // Client ID - e.g. 'cot-switch-X1234567890123456789012345678901'
+    <CLIENT_SECRET>, // Client Secret - e.g. '1234567890123456789012345678901234567890123456789012345678901234'
+    <AUTH_STORAGE_INSTANCE> // It can be any storage option using AuthStorageInterface - e.g. new DatabaseAuthStorage()
 );
 
-// Example usage
 // Invoke handleCallback function to handle code coming from the authentication server
 $client->handleCallback();
+
 // get anonymous consumer data for the current user
 $client->getAnonymousConsumerData();
 ```
