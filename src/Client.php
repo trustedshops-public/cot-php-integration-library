@@ -21,6 +21,7 @@ use TRSTD\COT\ActionType;
 use TRSTD\COT\AnonymousConsumerData;
 use TRSTD\COT\Exception\UnexpectedErrorException;
 use TRSTD\COT\Exception\RequiredParameterMissingException;
+use TRSTD\COT\Exception\TokenNotFoundException;
 use TRSTD\COT\Util\EncryptionUtils;
 use TRSTD\COT\Util\PKCEUtils;
 
@@ -38,9 +39,15 @@ CacheManager::setDefaultConfig(new ConfigurationOption([
 
 class Client
 {
-    private static $identityCookie = 'TRSTD_ID_TOKEN';
-    private static $codeVerifierCookie = 'TRSTD_CV';
-    private static $codeChallengeCookie = 'TRSTD_CC';
+    private const IDENTITY_COOKIE_KEY = 'TRSTD_ID_TOKEN';
+    private const CODE_VERIFIER_COOKIE_KEY = 'TRSTD_CV';
+    private const CODE_CHALLENGE_COOKIE_KEY = 'TRSTD_CC';
+
+    private const JWKS_CACHE_KEY = 'JWKS';
+    private const JWKS_CACHE_TTL = 3600; // 1 hour
+
+    private const CONSUMER_ANONYMOUS_DATA_CACHE_KEY = 'CONSUMER_ANONYMOUS_DATA_';
+    private const CONSUMER_ANONYMOUS_DATA_CACHE_TTL = 3600; // 1 hour
 
     /**
      * @var AuthStorage
@@ -120,6 +127,7 @@ class Client
     }
 
     /**
+     * Handles the callback from the auth server
      * @return void
      */
     public function handleCallback()
@@ -142,12 +150,10 @@ class Client
         try {
             $idToken = $this->getIdentityCookie();
             $accessToken = $this->getOrRefreshAccessToken($idToken);
+            $decodedToken = $this->decodeToken($idToken, false);
 
-            if (!$accessToken) {
-                return null;
-            }
-
-            $cachedConsumerAnonymousDataItem = $this->cacheItemPool->getItem('consumer_anonymous_data');
+            // check if the consumer anonymous data is cached
+            $cachedConsumerAnonymousDataItem = $this->cacheItemPool->getItem(self::CONSUMER_ANONYMOUS_DATA_CACHE_KEY . $decodedToken->ctc_id);
             if ($cachedConsumerAnonymousDataItem->isHit()) {
                 return $cachedConsumerAnonymousDataItem->get();
             }
@@ -159,7 +165,9 @@ class Client
 
             $response = $this->resourceHttpClient->request("GET", "anonymous-data" . ($this->tsId ? "?shopId=" . $this->tsId : ""), ['headers' => $headers]);
             $consumerAnonymousData = json_decode($response->getContent());
-            $cachedConsumerAnonymousDataItem->set($consumerAnonymousData)->expiresAfter(5);
+
+            // cache the consumer anonymous data
+            $cachedConsumerAnonymousDataItem->set($consumerAnonymousData)->expiresAfter(self::CONSUMER_ANONYMOUS_DATA_CACHE_TTL);
             $this->cacheItemPool->save($cachedConsumerAnonymousDataItem);
 
             return $consumerAnonymousData;
@@ -190,8 +198,8 @@ class Client
      */
     private function disconnect()
     {
-        if (isset($_COOKIE[self::$identityCookie])) {
-            $idToken = $_COOKIE[self::$identityCookie];
+        $idToken = $this->getIdentityCookie();
+        if (isset($idToken)) {
             $decodedToken = $this->decodeToken($idToken, false);
             $this->authStorage->remove($decodedToken->ctc_id);
             $this->removeIdentityCookie();
@@ -254,7 +262,8 @@ class Client
 
     /**
      * @param string $idTokenid token to get or refresh access token
-     * @return string|null
+     * @return string
+     * @throws TokenNotFoundException if a valid token cannot be found in storage
      */
     private function getOrRefreshAccessToken($idToken)
     {
@@ -298,7 +307,7 @@ class Client
             return $token->accessToken;
         }
 
-        return null;
+        throw new TokenNotFoundException('A valid token cannot be found in storage. Authentication is required.');
     }
 
     /**
@@ -336,29 +345,32 @@ class Client
         return null;
     }
 
+    /**
+     * @param string $token token to decode
+     * @param bool $validateExp if true, validates the expiration time
+     * @return object decoded token
+     */
     private function decodeToken($token, $validateExp = true)
     {
-        try {
-            if (!$validateExp) {
-                $tks = explode('.', $token);
-                return JWT::jsonDecode(JWT::urlsafeB64Decode($tks[1]));
-            }
-
-            return JWT::decode($token, $this->getJWKS());
-        } catch (Exception $ex) {
-            $this->logger->error($ex->getMessage());
-            throw new UnexpectedErrorException('Unexpected error occurred: ' . $ex->getMessage(), 0, $ex);
+        if (!$validateExp) {
+            $tks = explode('.', $token);
+            return JWT::jsonDecode(JWT::urlsafeB64Decode($tks[1]));
         }
+
+        return JWT::decode($token, $this->getJWKS());
     }
 
+    /**
+     * @return JWK
+     */
     private function getJWKS()
     {
-        $cachedJWKSItem = $this->cacheItemPool->getItem('jwks');
+        $cachedJWKSItem = $this->cacheItemPool->getItem(self::JWKS_CACHE_KEY);
 
         if (!$cachedJWKSItem->isHit()) {
             $response = $this->authHttpClient->request("GET", "certs");
             $jwks = json_decode($response->getContent(), true);
-            $this->cacheItemPool->getItem('jwks')->set($jwks)->expiresAfter(3600);
+            $cachedJWKSItem->set($jwks)->expiresAfter(self::JWKS_CACHE_TTL);
             $this->cacheItemPool->save($cachedJWKSItem);
         }
 
@@ -394,7 +406,7 @@ class Client
      */
     private function getIdentityCookie()
     {
-        return $_COOKIE[self::$identityCookie];
+        return $_COOKIE[self::IDENTITY_COOKIE_KEY];
     }
 
     /**
@@ -402,16 +414,15 @@ class Client
      */
     private function setIdentityCookie($idToken)
     {
-        setcookie(self::$identityCookie, $idToken, strtotime("2038-01-1 00:00:00"), '/',  $_SERVER['HTTP_HOST'], true, false);
+        setcookie(self::IDENTITY_COOKIE_KEY, $idToken, strtotime("2038-01-1 00:00:00"), '/',  $_SERVER['HTTP_HOST'], true, false);
     }
 
     /**
-     * @param string $codeVerifier code verifier to set in cookie
-     * @param string $codeChallenge code challenge to set in cookie
+     * @return void
      */
     private function removeIdentityCookie()
     {
-        setcookie(self::$identityCookie, '', time() - 3600, '/', $_SERVER['HTTP_HOST'], true, false);
+        setcookie(self::IDENTITY_COOKIE_KEY, '', time() - 3600, '/', $_SERVER['HTTP_HOST'], true, false);
     }
 
     /**
@@ -422,8 +433,8 @@ class Client
     private function setCodeVerifierAndChallengeCookie($codeVerifier, $codeChallenge)
     {
         $encryptedCodeVerifier = EncryptionUtils::encryptValue($this->clientSecret, $codeVerifier);
-        setcookie(self::$codeVerifierCookie, $encryptedCodeVerifier, 0, '/', $_SERVER['HTTP_HOST'], true, true);
-        setcookie(self::$codeChallengeCookie, $codeChallenge, 0, '/', $_SERVER['HTTP_HOST'], true, false);
+        setcookie(self::CODE_VERIFIER_COOKIE_KEY, $encryptedCodeVerifier, 0, '/', $_SERVER['HTTP_HOST'], true, true);
+        setcookie(self::CODE_CHALLENGE_COOKIE_KEY, $codeChallenge, 0, '/', $_SERVER['HTTP_HOST'], true, false);
     }
 
     /**
@@ -431,7 +442,7 @@ class Client
      */
     private function refreshPKCE($force = false)
     {
-        if ($force || !isset($_COOKIE[self::$codeVerifierCookie]) || !isset($_COOKIE[self::$codeChallengeCookie])) {
+        if ($force || !isset($_COOKIE[self::CODE_VERIFIER_COOKIE_KEY]) || !isset($_COOKIE[self::CODE_CHALLENGE_COOKIE_KEY])) {
             $codeVerifier = PKCEUtils::generateCodeVerifier();
             $codeChallenge = PKCEUtils::generateCodeChallenge($codeVerifier);
             $this->setCodeVerifierAndChallengeCookie($codeVerifier, $codeChallenge);
@@ -443,7 +454,7 @@ class Client
      */
     private function getCodeVerifierCookie()
     {
-        $encryptedCodeVerifier = $_COOKIE[self::$codeVerifierCookie];
+        $encryptedCodeVerifier = $_COOKIE[self::CODE_VERIFIER_COOKIE_KEY];
 
         if ($encryptedCodeVerifier) {
             return EncryptionUtils::decryptValue($this->clientSecret, $encryptedCodeVerifier);
