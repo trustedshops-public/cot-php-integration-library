@@ -47,7 +47,7 @@ On frontend side:
 
 ```html
 <trstd-switch tsId="X1234567890123456789012345678901"></trstd-switch>
-<script />
+<script type="module" src="https://widgets.trustedshops.com/switch/switch.js"></script>
 ```
 
 For more detailed examples, please refer to the `examples/` directory.
@@ -67,8 +67,6 @@ This library is licensed under the Apache 2.0 License - see the [LICENSE](LICENS
 - [monolog/monolog](https://github.com/Seldaek/monolog) for logging
 - [phpfastcache/phpfastcache](https://github.com/PHPSocialNetwork/phpfastcache) for caching solutions
 - [symfony/http-client](https://github.com/symfony/http-client) for HTTP client features
-
-For more information, visit the [project homepage](https://github.com/trustedshops-public/cot-php-integration-library).
 
 ## Versioning
 
