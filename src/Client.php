@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace TRSTD\COT;
 
 use Exception;
@@ -167,6 +169,7 @@ class Client
             $consumerAnonymousData = json_decode($response->getContent());
 
             // cache the consumer anonymous data
+            // TODO remove the caching feature when the pilot phase is over
             $cachedConsumerAnonymousDataItem->set($consumerAnonymousData)->expiresAfter(self::CONSUMER_ANONYMOUS_DATA_CACHE_TTL);
             $this->cacheItemPool->save($cachedConsumerAnonymousDataItem);
 

@@ -4,7 +4,7 @@ namespace TRSTD\COT;
 
 use TRSTD\COT\Token;
 
-interface AuthStorage
+interface AuthStorageInterface
 {
     /**
      * @param Token $token Token object
