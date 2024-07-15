@@ -19,6 +19,10 @@
         "phpfastcache/phpfastcache": "^8",
         "symfony/http-client": "^5"
     },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3",
+        "phpstan/phpstan": "^1"
+    },
     "autoload": {
         "psr-4": {
             "TRSTD\\COT\\": "src/"
@@ -27,22 +31,5 @@
     "config": {
         "preferred-install": "dist",
         "prepend-autoloader": false
-    },
-    "archive": {
-        "exclude": [
-            "tests/",
-            "docs/",
-            "examples/",
-            "phpunit.xml.dist",
-            "composer.json",
-            "composer.lock",
-            ".gitignore",
-            ".gitattributes",
-            ".git/"
-        ]
-    },
-    "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.59",
-        "phpstan/phpstan": "^1.11"
     }
 }
