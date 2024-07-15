@@ -86,7 +86,7 @@ class trstdexampleintegration extends Module
             'anonymousConsumerData' => $anonymousConsumerData
         ]);
 
-        return $this->fetch('module:trstdexampleintegration/views/templates/front/switch.tpl');
+        return $this->fetch('module:trstdexampleintegration/views/templates/front/consumerdata.tpl');
     }
 
     /**
