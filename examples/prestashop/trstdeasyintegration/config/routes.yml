@@ -1,0 +1,7 @@
+client_configuration_form:
+  path: /trstdexampleintegration/configuration
+  methods: [GET, POST]
+  defaults:
+    _controller: 'TRSTDExampleIntegration\Controller\Admin\ClientConfigurationController::index'
+    _legacy_controller: TRSTDExampleIntegrationConfigurationForm
+    _legacy_link: TRSTDExampleIntegrationConfigurationForm

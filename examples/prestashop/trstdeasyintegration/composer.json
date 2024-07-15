@@ -1,0 +1,22 @@
+{
+    "name": "trstd/exampleintegration",
+    "description": "Example of how to integrate with TRSTD COT",
+    "license": "Apache-2.0",
+    "require": {
+        "trstd/cot-integration-library": "dev-main"
+    },
+    "autoload": {
+        "psr-4": {
+            "TRSTDExampleIntegration\\": "src/"
+        },
+        "classmap": [
+            "trstdexampleintegration.php"
+        ],
+        "exclude-from-classmap": []
+    },
+    "config": {
+        "preferred-install": "dist",
+        "prepend-autoloader": false
+    },
+    "type": "prestashop-module"
+}

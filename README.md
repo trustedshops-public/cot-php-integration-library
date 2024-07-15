@@ -50,7 +50,7 @@ On frontend side:
 <script type="module" src="https://widgets.trustedshops.com/switch/switch.js"></script>
 ```
 
-For more detailed examples, please refer to the `examples/` directory.
+For more detailed examples, please refer to the [`examples/`](./examples/) directory.
 
 ## Contributing
 
