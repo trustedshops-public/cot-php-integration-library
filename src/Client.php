@@ -15,8 +15,9 @@ use Symfony\Component\HttpClient\RetryableHttpClient;
 use Phpfastcache\CacheManager;
 use Phpfastcache\Core\Pool\ExtendedCacheItemPoolInterface;
 use Phpfastcache\Config\ConfigurationOption;
+use Monolog\Logger;
+use Psr\Log\LoggerInterface;
 
-use TRSTD\COT\Logger;
 use TRSTD\COT\AuthStorageInterface;
 use TRSTD\COT\Token;
 use TRSTD\COT\ActionType;
@@ -72,7 +73,7 @@ class Client
     private $clientSecret;
 
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
@@ -120,7 +121,7 @@ class Client
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
         $this->authStorage = $authStorage;
-        $this->logger = new Logger();
+        $this->logger = new Logger("TRSTD/COT");
 
         $this->authHttpClient = HttpClient::createForBaseUri(AUTH_SERVER_BASE_URI);
         $this->resourceHttpClient = HttpClient::createForBaseUri(RESOURCE_SERVER_BASE_URI);
