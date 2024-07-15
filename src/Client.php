@@ -432,7 +432,7 @@ class Client
     /**
      * @param string $codeVerifier code verifier to set in cookie
      * @param string $codeChallenge code challenge to set in cookie
-     * @return string
+     * @return void
      */
     private function setCodeVerifierAndChallengeCookie($codeVerifier, $codeChallenge)
     {
