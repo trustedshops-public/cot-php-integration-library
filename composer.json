@@ -10,7 +10,7 @@
         "library"
     ],
     "homepage": "https://github.com/trustedshops-public/cot-php-integration-library",
-    "license": "Apache-2.0",
+    "license": "MIT",
     "require": {
         "php": ">=7.2",
         "firebase/php-jwt": "^6",

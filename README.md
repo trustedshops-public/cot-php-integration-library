@@ -58,7 +58,7 @@ Contributions are welcome! Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md
 
 ## License
 
-This library is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
+This library is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 

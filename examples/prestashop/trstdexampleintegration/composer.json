@@ -1,7 +1,6 @@
 {
     "name": "trstd/exampleintegration",
     "description": "Example of how to integrate with TRSTD COT",
-    "license": "Apache-2.0",
     "require": {
         "trstd/cot-integration-library": "dev-main"
     },

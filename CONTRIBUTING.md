@@ -56,7 +56,7 @@ Follow the [PSR-12: Extended Coding Style](https://www.php-fig.org/psr/psr-12/).
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under its [Apache 2.0 License](LICENSE).
+By contributing, you agree that your contributions will be licensed under its [MIT License](LICENSE).
 
 ## Acknowledgments
 
