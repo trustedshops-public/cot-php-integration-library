@@ -1,0 +1,8 @@
+/doc export-ignore
+/examples export-ignore
+/tests export-ignore
+/.* export-ignore
+/phpstan* export-ignore
+/phpunit.xml.dist export-ignore
+/_config.yml export-ignore
+/.editorconfig export-ignore

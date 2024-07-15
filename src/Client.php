@@ -417,7 +417,7 @@ class Client
      */
     private function setIdentityCookie($idToken)
     {
-        setcookie(self::IDENTITY_COOKIE_KEY, $idToken, strtotime("2038-01-1 00:00:00"), '/',  $_SERVER['HTTP_HOST'], true, false);
+        setcookie(self::IDENTITY_COOKIE_KEY, $idToken, strtotime("2038-01-1 00:00:00"), '/', $_SERVER['HTTP_HOST'], true, false);
     }
 
     /**

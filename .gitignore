@@ -1,6 +1,9 @@
-/.idea/
-/build/php-cs-fixer.cache
-/composer.lock
-/composer.phar
-/tests/.phpunit.result.cache
-/vendor/
+vendor
+composer.phar
+phpunit.xml
+composer.lock
+.DS_Store
+.php-cs-fixer.cache
+.hg
+.phpunit.result.cache
+.phpunit.cache

@@ -7,5 +7,5 @@ class ActionType
     /**
      * Used to disconnect from the authentication server
      */
-    const DISCONNECT = 'disconnect';
+    public const DISCONNECT = 'disconnect';
 }
