@@ -22,20 +22,20 @@ final class COTAuthRepository
      * @param Token $token
      * @param string $ctcId
      */
-    public function saveAuth($token, $ctcId)
+    public function save($token, $ctcId)
     {
-        $cotAuth = $this->getAuthByCtcId($ctcId);
+        $cotAuth = $this->get($ctcId);
         if (!$cotAuth) {
-            $this->createAuth($token, $ctcId);
+            $this->create($token, $ctcId);
         } else {
-            $this->updateAuth($token, $ctcId);
+            $this->update($token, $ctcId);
         }
     }
 
     /**
      * @param string $ctcId
      */
-    public function deleteAuthByCtcId($ctcId)
+    public function delete($ctcId)
     {
         $this->db->delete(COTAuth::$definition['table'], 'id_ctc = "' . pSQL($ctcId) . '"');
     }
@@ -44,7 +44,7 @@ final class COTAuthRepository
      * @param string $ctcId
      * @return COTAuth|null
      */
-    public function getAuthByCtcId($ctcId)
+    public function get($ctcId)
     {
         $request = "SELECT * FROM " . _DB_PREFIX_ . COTAuth::$definition['table'] . " WHERE id_ctc = '" . pSQL($ctcId) . "'";
         $result = $this->db->getRow($request);
@@ -63,7 +63,7 @@ final class COTAuthRepository
         return $cotAuth;
     }
 
-    private function createAuth(Token $token, $ctcId)
+    private function create($ctcId, Token $token)
     {
         $this->db->insert(
             COTAuth::$definition['table'],
@@ -76,7 +76,7 @@ final class COTAuthRepository
         );
     }
 
-    private function updateAuth(Token $token, $ctcId)
+    private function update($ctcId, Token $token)
     {
         $this->db->update(
             COTAuth::$definition['table'],

@@ -18,14 +18,9 @@ class COTAuthDBStorage implements AuthStorageInterface
         $this->cotAuthRepository = new COTAuthRepository();
     }
 
-    public function set(Token $token, $ctcId)
+    public function get($ctcId)
     {
-        $this->cotAuthRepository->saveAuth($token, $ctcId);
-    }
-
-    public function getByCtcId($ctcId)
-    {
-        $cotAuth = $this->cotAuthRepository->getAuthByCtcId($ctcId);
+        $cotAuth = $this->cotAuthRepository->get($ctcId);
 
         if ($cotAuth === null) {
             return null;
@@ -34,11 +29,16 @@ class COTAuthDBStorage implements AuthStorageInterface
         return new Token($cotAuth->id_token, $cotAuth->refresh_token, $cotAuth->access_token);
     }
 
+    public function set($ctcId, Token $token)
+    {
+        $this->cotAuthRepository->save($ctcId, $token);
+    }
+
     /**
      * @param string $ctcId
      */
     public function remove($ctcId)
     {
-        $this->cotAuthRepository->deleteAuthByCtcId($ctcId);
+        $this->cotAuthRepository->delete($ctcId);
     }
 }

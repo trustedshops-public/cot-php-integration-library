@@ -320,7 +320,7 @@ class Client
     {
         try {
             $decodedToken = $this->decodeToken($token->idToken, false);
-            $this->authStorage->set($token, $decodedToken->ctc_id);
+            $this->authStorage->set($decodedToken->ctc_id, $token);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
         } catch (Exception $ex) {
@@ -337,7 +337,7 @@ class Client
     {
         try {
             $decodedToken = $this->decodeToken($idToken, false);
-            return $this->authStorage->getByCtcId($decodedToken->ctc_id);
+            return $this->authStorage->get($decodedToken->ctc_id);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
         } catch (Exception $ex) {
