@@ -1,0 +1,48 @@
+version: 2.1
+
+filter_main: &filter_main
+  filters:
+    branches:
+      only:
+        - main
+
+orbs:
+  semantic-release: trustedshops-public/semantic-release@6.0.0
+
+executors:
+  php:
+    docker:
+      - image: cimg/php:7.2.24
+
+jobs:
+  build:
+    executor: php
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - composer-v1-{{ checksum "composer.lock" }}
+      - run: composer install -n --prefer-dist
+      - save_cache:
+          key: composer-v1-{{ checksum "composer.lock" }}
+          paths:
+            - ./vendor
+      - run:
+          name: PHPStan analysing your codebase
+          command: |
+            ./vendor/bin/phpstan analyse src
+      - run:
+          name: Codebase analysis with CS Fixer
+          command: |
+            ./vendor/bin/php-cs-fixer fix src --dry-run --diff
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build
+      - semantic-release/with_changelog_github_config:
+          name: semantic-release
+          <<: *filter_main
+          context:
+            - github-release
