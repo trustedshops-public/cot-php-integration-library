@@ -51,4 +51,4 @@ workflows:
             - build
           <<: *filter_main
           context:
-            - github-release
+            - semantic-release
