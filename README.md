@@ -6,7 +6,7 @@ This library provides a comprehensive PHP interface for integrating with the Com
 
 ## Requirements
 
-- PHP >= 7.2
+- PHP >= 7.4
 - Composer for managing dependencies
 
 ## Installation
