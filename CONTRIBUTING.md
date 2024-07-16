@@ -51,12 +51,29 @@ Follow the [PSR-12: Extended Coding Style](https://www.php-fig.org/psr/psr-12/).
 
 ### Documentation Styleguide
 
-- Use [Markdown](https://daringfireball.net/projects/markdown/).
+- Use Markdown
 - Reference methods and classes in backticks.
 
 ## License
 
 By contributing, you agree that your contributions will be licensed under its [MIT License](LICENSE).
+
+## Developer Certificate of Origin
+
+Every external contributor needs to sign commits with a valid DCO.
+
+This is done by adding a Signed-off-by line to commit messages.
+
+```
+This is my commit message
+Signed-off-by: Random J Developer <random@developer.example.org>
+```
+
+Git even has a -s command line option to append this automatically to your commit message:
+
+```
+git commit -s -m 'This is my commit message'
+```
 
 ## Acknowledgments
 

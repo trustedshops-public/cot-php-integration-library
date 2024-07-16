@@ -1,5 +1,7 @@
 # Community of Trust PHP Integration Library
 
+![License](https://img.shields.io/github/license/trustedshops-public/cot-php-integration-library)
+
 This library provides a comprehensive PHP interface for integrating with the Community of Trust (COT) platform, facilitating seamless interactions with its services.
 
 ## Requirements
