@@ -21,12 +21,16 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - composer-v2-{{ checksum "composer.lock" }}
+            # "composer.json" can be used if "composer.json"
+            # is not committed to the repository.
+            - composer-v1-{{ checksum "composer.lock" }}
+            # fallback to using the latest cache if no exact match is found
+            - composer-v1-
       - run: composer install -n --prefer-dist
       - save_cache:
-          key: composer-v2-{{ checksum "composer.lock" }}
+          key: composer-v1-{{ checksum "composer.lock" }}
           paths:
-            - ./vendor
+            - vendor
       - run:
           name: PHPStan analysing your codebase
           command: |
