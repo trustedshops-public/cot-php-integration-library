@@ -12,7 +12,7 @@
     "homepage": "https://github.com/trustedshops-public/cot-php-integration-library",
     "license": "MIT",
     "require": {
-        "php": ">=7.2",
+        "php": ">=7.4",
         "firebase/php-jwt": "^6",
         "phpseclib/phpseclib": "^3",
         "monolog/monolog": "^2",
