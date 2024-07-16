@@ -12,7 +12,7 @@ orbs:
 executors:
   php:
     docker:
-      - image: cimg/php:7.2.24
+      - image: cimg/php:7.2.34
 
 jobs:
   build:
@@ -21,10 +21,10 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - composer-v1-{{ checksum "composer.lock" }}
+            - composer-v2-{{ checksum "composer.lock" }}
       - run: composer install -n --prefer-dist
       - save_cache:
-          key: composer-v1-{{ checksum "composer.lock" }}
+          key: composer-v2-{{ checksum "composer.lock" }}
           paths:
             - ./vendor
       - run:
