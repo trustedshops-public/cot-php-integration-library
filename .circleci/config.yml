@@ -26,7 +26,7 @@ jobs:
             - composer-v1-{{ checksum "composer.lock" }}
             # fallback to using the latest cache if no exact match is found
             - composer-v1-
-      - run: composer install -n --prefer-dist
+      - run: composer install -n --prefer-dist --ignore-platform-reqs
       - save_cache:
           key: composer-v1-{{ checksum "composer.lock" }}
           paths:
@@ -47,6 +47,8 @@ workflows:
       - build
       - semantic-release/with_changelog_github_config:
           name: semantic-release
+          requires:
+            - build
           <<: *filter_main
           context:
             - github-release
