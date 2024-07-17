@@ -21,20 +21,40 @@ final class ClientTest extends TestCase
     /**
      * @covers \TRSTD\COT\Client::__construct
      */
-    public function testConstructorThrowsRequiredParameterMissingExceptionForMissingParameters()
+    public function testConstructorThrowsRequiredParameterMissingExceptionForMissingTsId()
     {
         $mockAuthStorage = $this->createMock(AuthStorageInterface::class);
         $this->expectException(RequiredParameterMissingException::class);
-        new Client('', '', '', $mockAuthStorage);
+        new Client('', 'CLIENT_ID', 'CLIENT_SECRET', $mockAuthStorage);
     }
 
     /**
      * @covers \TRSTD\COT\Client::__construct
      */
-    public function testConstructorThrowsTypeErrorForNullAuthStorage()
+    public function testConstructorThrowsRequiredParameterMissingExceptionForMissingClientId()
     {
-        $this->expectException(TypeError::class);
-        new Client('ABC', 'ABC', 'ABC', null);
+        $mockAuthStorage = $this->createMock(AuthStorageInterface::class);
+        $this->expectException(RequiredParameterMissingException::class);
+        new Client('TSID', '', 'CLIENT_SECRET', $mockAuthStorage);
+    }
+
+    /**
+     * @covers \TRSTD\COT\Client::__construct
+     */
+    public function testConstructorThrowsRequiredParameterMissingExceptionForMissingClientSecret()
+    {
+        $mockAuthStorage = $this->createMock(AuthStorageInterface::class);
+        $this->expectException(RequiredParameterMissingException::class);
+        new Client('TSID', 'CLIENT_ID', '', $mockAuthStorage);
+    }
+
+    /**
+     * @covers \TRSTD\COT\Client::__construct
+     */
+    public function testConstructorThrowsRequiredParameterMissingExceptionForMissingAuthStorage()
+    {
+        $this->expectException(RequiredParameterMissingException::class);
+        new Client('TSID', 'CLIENT_ID', 'CLIENT_SECRET', null);
     }
 
     /**
