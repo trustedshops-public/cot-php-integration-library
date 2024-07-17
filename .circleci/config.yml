@@ -35,10 +35,8 @@ jobs:
   analyse:
     executor: php
     steps:
-      - restore_cache:
-          keys:
-            - composer-v2-{{ checksum "composer.lock" }}
-            - composer-v2-
+      - attach_workspace:
+          at: .
       - run:
           name: PHPStan analysing your codebase
           command: |
@@ -53,10 +51,8 @@ jobs:
   test:
     executor: php
     steps:
-      - restore_cache:
-          keys:
-            - composer-v2-{{ checksum "composer.lock" }}
-            - composer-v2-
+      - attach_workspace:
+          at: .
       - run: ./vendor/bin/phpunit tests
 
 workflows:
