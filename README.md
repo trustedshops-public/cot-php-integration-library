@@ -22,7 +22,7 @@ composer require trstd/cot-integration-library
 
 Here is a basic example of how to use the library:
 
-On backend side:
+On the backend side:
 
 ```php
 <?php
@@ -46,7 +46,7 @@ $client->handleCallback();
 $client->getAnonymousConsumerData();
 ```
 
-On frontend side:
+On the frontend side, place the following code in your HTML file where you want the widget to appear:
 
 ```html
 <trstd-switch tsId="X1234567890123456789012345678901"></trstd-switch>
