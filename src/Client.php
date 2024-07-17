@@ -176,6 +176,7 @@ final class Client
 
     /**
      * @param LoggerInterface $logger logger to set
+     * @return void
      */
     public function setLogger(LoggerInterface $logger)
     {
@@ -184,6 +185,7 @@ final class Client
 
     /**
      * @param HttpClientInterface $httpClient http client to set
+     * @return void
      */
     public function setHttpClient(HttpClientInterface $httpClient)
     {
@@ -192,6 +194,7 @@ final class Client
 
     /**
      * @param CacheItemPoolInterface $cacheItemPool cache item pool to set
+     * @return void
      */
     public function setCacheItemPool(CacheItemPoolInterface $cacheItemPool)
     {
@@ -199,6 +202,7 @@ final class Client
     }
 
     /**
+     * @param string $code code to exchange for token
      * @return Token|null
      */
     private function connect($code)
@@ -333,6 +337,7 @@ final class Client
 
     /**
      * @param Token $token token to set in storage
+     * @return void
      */
     private function setTokenOnStorage(Token $token)
     {
@@ -402,6 +407,7 @@ final class Client
 
     /**
      * @param string $code code to handle
+     * @return void
      */
     private function handleAuthCode($code)
     {
@@ -414,6 +420,7 @@ final class Client
 
     /**
      * @param string $actionType action type to handle
+     * @return void
      */
     private function handleAction($actionType)
     {
@@ -432,6 +439,7 @@ final class Client
 
     /**
      * @param string $idToken id token to set in cookie
+     * @return void
      */
     private function setIdentityCookie($idToken)
     {
@@ -466,6 +474,7 @@ final class Client
 
     /**
      * @param bool $force if true, refreshes the PKCE even if it is already set
+     * @return void
      */
     private function refreshPKCE($force = false)
     {

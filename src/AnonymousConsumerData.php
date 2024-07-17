@@ -2,17 +2,38 @@
 
 namespace TRSTD\COT;
 
-class AnonymousConsumerData
+// {
+//     "statistics": {
+//         "averageOrderValue": 1258.95,
+//         "maxOrderValue": 3409.9,
+//         "orderVolumeLastMonth": 0,
+//         "orderVolumeLastYear": 7553.7,
+//         "shopsStats": {
+//             "X28CE7862CD7A9FCB94648A47D7E462B6": {}
+//         },
+//         "calculatedAt": "2024-07-17T11:30:11Z"
+//     },
+//     "membershipInfo": {
+//         "memberships": [
+//             {
+//                 "type": "BASIC",
+//                 "startDate": "2022-02-11T15:29:54Z"
+//             }
+//         ]
+//     }
+// }
+
+final class AnonymousConsumerData
 {
     /**
      * @var Statistics
      */
-    public $statistics;
+    private $statistics;
 
     /**
      * @var MembershipInfo
      */
-    public $membershipInfo;
+    private $membershipInfo;
 
     /**
      * @param Statistics $statistics
@@ -23,46 +44,62 @@ class AnonymousConsumerData
         $this->statistics = $statistics;
         $this->membershipInfo = $membershipInfo;
     }
+
+    /**
+     * @return Statistics
+     */
+    public function getStatistics()
+    {
+        return $this->statistics;
+    }
+
+    /**
+     * @return MembershipInfo
+     */
+    public function getMembershipInfo()
+    {
+        return $this->membershipInfo;
+    }
 }
 
-class Statistics
+final class Statistics
 {
     /**
      * @var float
      */
-    public $averageOrderValue;
+    private $averageOrderValue;
 
     /**
      * @var float
      */
-    public $maxOrderValue;
+    private $maxOrderValue;
 
     /**
      * @var float
      */
-    public $orderVolumeLastMonth;
+    private $orderVolumeLastMonth;
 
     /**
      * @var float
      */
-    public $orderVolumeLastYear;
+    private $orderVolumeLastYear;
 
     /**
-     * @var array
+     * @var array<string, object>
      */
-    public $shopsStats;
+    private $shopsStats;
 
     /**
      * @var string
      */
-    public $calculatedAt;
+    private $calculatedAt;
 
     /**
      * @param float $averageOrderValue
      * @param float $maxOrderValue
      * @param float $orderVolumeLastMonth
      * @param float $orderVolumeLastYear
-     * @param array $shopsStats
+     * @param array<string, object> $shopsStats
      * @param string $calculatedAt
      */
     public function __construct($averageOrderValue, $maxOrderValue, $orderVolumeLastMonth, $orderVolumeLastYear, $shopsStats, $calculatedAt)
@@ -74,35 +111,90 @@ class Statistics
         $this->shopsStats = $shopsStats;
         $this->calculatedAt = $calculatedAt;
     }
+
+    /**
+     * @return float
+     */
+    public function getAverageOrderValue()
+    {
+        return $this->averageOrderValue;
+    }
+
+    /**
+     * @return float
+     */
+    public function getMaxOrderValue()
+    {
+        return $this->maxOrderValue;
+    }
+
+    /**
+     * @return float
+     */
+    public function getOrderVolumeLastMonth()
+    {
+        return $this->orderVolumeLastMonth;
+    }
+
+    /**
+     * @return float
+     */
+    public function getOrderVolumeLastYear()
+    {
+        return $this->orderVolumeLastYear;
+    }
+
+    /**
+     * @return array<string, object>
+     */
+    public function getShopsStats()
+    {
+        return $this->shopsStats;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCalculatedAt()
+    {
+        return $this->calculatedAt;
+    }
 }
 
-class MembershipInfo
+final class MembershipInfo
 {
     /**
-     * @var Membership[]
+     * @var array<Membership>
      */
-    public $memberships;
+    private $memberships;
 
     /**
-     * @param Membership[] $memberships
+     * @param array<Membership> $memberships
      */
     public function __construct($memberships)
     {
         $this->memberships = $memberships;
     }
+
+    /**
+     * @return array<Membership> $memberships
+     */
+    public function getMemberships()
+    {
+        return $this->memberships;
+    }
 }
 
-class Membership
-{
+final class Membership {
     /**
      * @var string
      */
-    public $type;
+    private $type;
 
     /**
      * @var string
      */
-    public $startDate;
+    private $startDate;
 
     /**
      * @param string $type
@@ -112,5 +204,21 @@ class Membership
     {
         $this->type = $type;
         $this->startDate = $startDate;
+    }
+
+    /**
+     * @return string
+     */
+    public function getType()
+    {
+        return $this->type;
+    }
+
+    /**
+     * @return string
+     */
+    public function getStartDate()
+    {
+        return $this->startDate;
     }
 }

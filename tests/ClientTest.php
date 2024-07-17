@@ -20,6 +20,7 @@ final class ClientTest extends TestCase
 
     /**
      * @covers \TRSTD\COT\Client::__construct
+     * @return void
      */
     public function testConstructorThrowsRequiredParameterMissingExceptionForMissingTsId()
     {
@@ -30,6 +31,7 @@ final class ClientTest extends TestCase
 
     /**
      * @covers \TRSTD\COT\Client::__construct
+     * @return void
      */
     public function testConstructorThrowsRequiredParameterMissingExceptionForMissingClientId()
     {
@@ -40,6 +42,7 @@ final class ClientTest extends TestCase
 
     /**
      * @covers \TRSTD\COT\Client::__construct
+     * @return void
      */
     public function testConstructorThrowsRequiredParameterMissingExceptionForMissingClientSecret()
     {
@@ -50,6 +53,7 @@ final class ClientTest extends TestCase
 
     /**
      * @covers \TRSTD\COT\Client::__construct
+     * @return void
      */
     public function testConstructorThrowsRequiredParameterMissingExceptionForMissingAuthStorage()
     {
@@ -59,6 +63,7 @@ final class ClientTest extends TestCase
 
     /**
      * @covers \TRSTD\COT\Client::handleCallback
+     * @return void
      */
     public function testHandleCallbackWithCode()
     {
