@@ -60,7 +60,7 @@ jobs:
       - run: ./vendor/bin/phpunit tests
 
 workflows:
-  build:
+  release:
     jobs:
       - install
       - analyse:
