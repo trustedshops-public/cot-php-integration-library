@@ -38,12 +38,12 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: PHPStan analysing your codebase
+          name: Codebase analysis with PHPStan
           command: |
             ./vendor/bin/phpstan analyse src
             ./vendor/bin/phpstan analyse tests
       - run:
-          name: Codebase analysis with CS Fixer
+          name: Codebase analysis with PHP-CS-Fixer
           command: |
             ./vendor/bin/php-cs-fixer fix src --dry-run --diff
             ./vendor/bin/php-cs-fixer fix tests --dry-run --diff
