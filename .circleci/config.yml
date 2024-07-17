@@ -15,7 +15,7 @@ executors:
       - image: cimg/php:7.4.33
 
 jobs:
-  build:
+  install:
     executor: php
     steps:
       - checkout
@@ -31,6 +31,14 @@ jobs:
           key: composer-v2-{{ checksum "composer.lock" }}
           paths:
             - vendor
+
+  analyse:
+    executor: php
+    steps:
+      - restore_cache:
+          keys:
+            - composer-v2-{{ checksum "composer.lock" }}
+            - composer-v2-
       - run:
           name: PHPStan analysing your codebase
           command: |
@@ -40,15 +48,31 @@ jobs:
           command: |
             ./vendor/bin/php-cs-fixer fix src --dry-run --diff
 
+  test:
+    executor: php
+    steps:
+      - restore_cache:
+          keys:
+            - composer-v2-{{ checksum "composer.lock" }}
+            - composer-v2-
+      - run: ./vendor/bin/phpunit tests
+
 workflows:
-  version: 2
   build:
     jobs:
-      - build
+      - install
+      - analyse:
+          requires:
+            - install
+      - test:
+          requires:
+            - analyse
       - semantic-release/with_changelog_github_config:
           name: semantic-release
           requires:
-            - build
+            - install
+            - analyse
+            - test
           <<: *filter_main
           context:
             - semantic-release
