@@ -13,6 +13,7 @@ executors:
   php:
     docker:
       - image: cimg/php:7.4.33
+    resource_class: small
 
 jobs:
   install:
