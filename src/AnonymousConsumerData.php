@@ -2,27 +2,6 @@
 
 namespace TRSTD\COT;
 
-// {
-//     "statistics": {
-//         "averageOrderValue": 1258.95,
-//         "maxOrderValue": 3409.9,
-//         "orderVolumeLastMonth": 0,
-//         "orderVolumeLastYear": 7553.7,
-//         "shopsStats": {
-//             "X28CE7862CD7A9FCB94648A47D7E462B6": {}
-//         },
-//         "calculatedAt": "2024-07-17T11:30:11Z"
-//     },
-//     "membershipInfo": {
-//         "memberships": [
-//             {
-//                 "type": "BASIC",
-//                 "startDate": "2022-02-11T15:29:54Z"
-//             }
-//         ]
-//     }
-// }
-
 final class AnonymousConsumerData
 {
     /**
