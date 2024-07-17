@@ -31,6 +31,10 @@ jobs:
           key: composer-v2-{{ checksum "composer.lock" }}
           paths:
             - vendor
+      - persist_to_workspace:
+          root: .
+          paths:
+            - vendor
 
   analyse:
     executor: php
