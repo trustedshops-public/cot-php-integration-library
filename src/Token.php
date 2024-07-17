@@ -2,7 +2,7 @@
 
 namespace TRSTD\COT;
 
-class Token
+final class Token
 {
     /**
      * @var string

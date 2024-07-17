@@ -2,7 +2,7 @@
 
 namespace TRSTD\COT;
 
-class ActionType
+final class ActionType
 {
     /**
      * Used to disconnect from the authentication server

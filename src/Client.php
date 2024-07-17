@@ -12,10 +12,11 @@ use Firebase\JWT\JWK;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Phpfastcache\CacheManager;
-use Phpfastcache\Core\Pool\ExtendedCacheItemPoolInterface;
 use Phpfastcache\Config\ConfigurationOption;
 use Monolog\Logger;
+
 use Psr\Log\LoggerInterface;
+use Psr\Cache\CacheItemPoolInterface;
 
 use TRSTD\COT\AuthStorageInterface;
 use TRSTD\COT\Token;
@@ -39,7 +40,7 @@ CacheManager::setDefaultConfig(new ConfigurationOption([
     "path" => __DIR__ . "/cache"
 ]));
 
-class Client
+final class Client
 {
     private const IDENTITY_COOKIE_KEY = 'TRSTD_ID_TOKEN';
     private const CODE_VERIFIER_COOKIE_KEY = 'TRSTD_CV';
@@ -50,11 +51,6 @@ class Client
 
     private const CONSUMER_ANONYMOUS_DATA_CACHE_KEY = 'CONSUMER_ANONYMOUS_DATA_';
     private const CONSUMER_ANONYMOUS_DATA_CACHE_TTL = 3600; // 1 hour
-
-    /**
-     * @var AuthStorageInterface
-     */
-    private $authStorage;
 
     /**
      * @var string
@@ -72,6 +68,11 @@ class Client
     private $clientSecret;
 
     /**
+     * @var AuthStorageInterface
+     */
+    private $authStorage;
+
+    /**
      * @var LoggerInterface
      */
     private $logger;
@@ -79,15 +80,10 @@ class Client
     /**
      * @var HttpClientInterface
      */
-    private $authHttpClient;
+    private $httpClient;
 
     /**
-     * @var HttpClientInterface
-     */
-    private $resourceHttpClient;
-
-    /**
-     * @var ExtendedCacheItemPoolInterface
+     * @var CacheItemPoolInterface
      */
     private $cacheItemPool;
 
@@ -120,11 +116,9 @@ class Client
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
         $this->authStorage = $authStorage;
+
         $this->logger = new Logger("TRSTD/COT");
-
-        $this->authHttpClient = HttpClient::createForBaseUri(AUTH_SERVER_BASE_URI);
-        $this->resourceHttpClient = HttpClient::createForBaseUri(RESOURCE_SERVER_BASE_URI);
-
+        $this->httpClient = HttpClient::create();
         $this->cacheItemPool = CacheManager::getInstance('files');
     }
 
@@ -165,7 +159,7 @@ class Client
                 'Authorization: Bearer ' . $accessToken,
             ];
 
-            $response = $this->resourceHttpClient->request("GET", "anonymous-data" . ($this->tsId ? "?shopId=" . $this->tsId : ""), ['headers' => $headers]);
+            $response = $this->httpClient->request("GET", "anonymous-data" . ($this->tsId ? "?shopId=" . $this->tsId : ""), ['headers' => $headers, 'base_uri' => RESOURCE_SERVER_BASE_URI]);
             $consumerAnonymousData = json_decode($response->getContent());
 
             // cache the consumer anonymous data
@@ -178,6 +172,30 @@ class Client
             $this->logger->error($ex->getMessage());
             return null;
         }
+    }
+
+    /**
+     * @param LoggerInterface $logger logger to set
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
+    /**
+     * @param HttpClientInterface $httpClient http client to set
+     */
+    public function setHttpClient(HttpClientInterface $httpClient)
+    {
+        $this->httpClient = $httpClient;
+    }
+
+    /**
+     * @param CacheItemPoolInterface $cacheItemPool cache item pool to set
+     */
+    public function setCacheItemPool(CacheItemPoolInterface $cacheItemPool)
+    {
+        $this->cacheItemPool = $cacheItemPool;
     }
 
     /**
@@ -228,7 +246,7 @@ class Client
             'code_verifier' => $this->getCodeVerifierCookie(),
         ];
 
-        $response = $this->authHttpClient->request("POST", "token", ['headers' => $headers, 'body' => $data]);
+        $response = $this->httpClient->request("POST", "token", ['headers' => $headers, 'body' => $data, 'base_uri' => AUTH_SERVER_BASE_URI]);
         $responseJson = json_decode($response->getContent());
         if (!$responseJson || isset($responseJson->error)) {
             return null;
@@ -254,7 +272,7 @@ class Client
             'refresh_token' => $refreshToken,
         ];
 
-        $response = $this->authHttpClient->request("POST", "token", ['headers' => $headers, 'body' => $data]);
+        $response = $this->httpClient->request("POST", "token", ['headers' => $headers, 'body' => $data, 'base_uri' => AUTH_SERVER_BASE_URI]);
         $responseJson = json_decode($response->getContent());
         if (!$responseJson || isset($responseJson->error)) {
             return null;
@@ -371,7 +389,7 @@ class Client
         $cachedJWKSItem = $this->cacheItemPool->getItem(self::JWKS_CACHE_KEY);
 
         if (!$cachedJWKSItem->isHit()) {
-            $response = $this->authHttpClient->request("GET", "certs");
+            $response = $this->httpClient->request("GET", "certs", ['base_uri' => AUTH_SERVER_BASE_URI]);
             $jwks = json_decode($response->getContent(), true);
             $cachedJWKSItem->set($jwks)->expiresAfter(self::JWKS_CACHE_TTL);
             $this->cacheItemPool->save($cachedJWKSItem);
@@ -417,7 +435,9 @@ class Client
      */
     private function setIdentityCookie($idToken)
     {
-        setcookie(self::IDENTITY_COOKIE_KEY, $idToken, strtotime("2038-01-1 00:00:00"), '/', $_SERVER['HTTP_HOST'], true, false);
+        if (!headers_sent()) {
+            setcookie(self::IDENTITY_COOKIE_KEY, $idToken, strtotime("2038-01-1 00:00:00"), '/', $_SERVER['HTTP_HOST'], true, false);
+        }
     }
 
     /**
@@ -425,7 +445,9 @@ class Client
      */
     private function removeIdentityCookie()
     {
-        setcookie(self::IDENTITY_COOKIE_KEY, '', time() - 3600, '/', $_SERVER['HTTP_HOST'], true, false);
+        if (!headers_sent()) {
+            setcookie(self::IDENTITY_COOKIE_KEY, '', time() - 3600, '/', $_SERVER['HTTP_HOST'], true, false);
+        }
     }
 
     /**
@@ -436,8 +458,10 @@ class Client
     private function setCodeVerifierAndChallengeCookie($codeVerifier, $codeChallenge)
     {
         $encryptedCodeVerifier = EncryptionUtils::encryptValue($this->clientSecret, $codeVerifier);
-        setcookie(self::CODE_VERIFIER_COOKIE_KEY, $encryptedCodeVerifier, 0, '/', $_SERVER['HTTP_HOST'], true, true);
-        setcookie(self::CODE_CHALLENGE_COOKIE_KEY, $codeChallenge, 0, '/', $_SERVER['HTTP_HOST'], true, false);
+        if (!headers_sent()) {
+            setcookie(self::CODE_VERIFIER_COOKIE_KEY, $encryptedCodeVerifier, 0, '/', $_SERVER['HTTP_HOST'], true, true);
+            setcookie(self::CODE_CHALLENGE_COOKIE_KEY, $codeChallenge, 0, '/', $_SERVER['HTTP_HOST'], true, false);
+        }
     }
 
     /**
