@@ -44,8 +44,8 @@ jobs:
       - run:
           name: Codebase analysis with PHPStan
           command: |
-            ./vendor/bin/phpstan analyse src
-            ./vendor/bin/phpstan analyse tests
+            ./vendor/bin/phpstan analyse src --level=5
+            ./vendor/bin/phpstan analyse tests --level=5
       - run:
           name: Codebase analysis with PHP-CS-Fixer
           command: |

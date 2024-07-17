@@ -94,7 +94,7 @@ final class Client
      * @param AuthStorageInterface $authStorage auth storage to store tokens
      * @throws RequiredParameterMissingException if any required parameter is missing
      */
-    public function __construct($tsId, $clientId, $clientSecret, AuthStorageInterface $authStorage)
+    public function __construct($tsId, $clientId, $clientSecret, AuthStorageInterface $authStorage = null)
     {
         if (!$tsId) {
             throw new RequiredParameterMissingException('TS ID is required.');
@@ -220,7 +220,7 @@ final class Client
     private function disconnect()
     {
         $idToken = $this->getIdentityCookie();
-        if (isset($idToken)) {
+        if ($idToken) {
             $decodedToken = $this->decodeToken($idToken, false);
             $this->authStorage->remove($decodedToken->ctc_id);
             $this->removeIdentityCookie();
@@ -282,8 +282,8 @@ final class Client
     }
 
     /**
-     * @param string $idTokenid token to get or refresh access token
-     * @return string
+     * @param string $idToken id token to get or refresh access token
+     * @return string|null
      * @throws TokenNotFoundException if a valid token cannot be found in storage
      */
     private function getOrRefreshAccessToken($idToken)
@@ -382,7 +382,7 @@ final class Client
     }
 
     /**
-     * @return JWK
+     * @return array<string, \Firebase\JWT\Key> JWKS
      */
     private function getJWKS()
     {
