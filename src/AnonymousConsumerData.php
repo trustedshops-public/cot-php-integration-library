@@ -185,7 +185,8 @@ final class MembershipInfo
     }
 }
 
-final class Membership {
+final class Membership
+{
     /**
      * @var string
      */
