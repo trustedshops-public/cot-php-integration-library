@@ -42,7 +42,7 @@ $client = new Client(
 // Invoke handleCallback function to handle code coming from the authentication server
 $client->handleCallback();
 
-// get anonymous consumer data for the current user
+// Get anonymous consumer data for the current user
 $client->getAnonymousConsumerData();
 ```
 
@@ -76,3 +76,7 @@ This library is licensed under the MIT License - see the [LICENSE](LICENSE) file
 This project adheres to [Semantic Versioning](https://semver.org/). For the versions available, see the [tags on this repository](
     https://github.com/trustedshops-public/cot-php-integration-library/tags
 ).
+
+## PHP Package Repository
+
+This library is available on [Packagist](https://packagist.org/packages/trstd/cot-integration-library).
