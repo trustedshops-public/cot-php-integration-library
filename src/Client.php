@@ -24,6 +24,7 @@ use TRSTD\COT\ActionType;
 use TRSTD\COT\AnonymousConsumerData;
 use TRSTD\COT\Exception\UnexpectedErrorException;
 use TRSTD\COT\Exception\RequiredParameterMissingException;
+use TRSTD\COT\Exception\TokenInvalidException;
 use TRSTD\COT\Exception\TokenNotFoundException;
 use TRSTD\COT\Util\EncryptionUtils;
 use TRSTD\COT\Util\PKCEUtils;
@@ -314,10 +315,17 @@ final class Client
             }
 
             if ($shouldRefresh) {
-                $refreshedToken = $this->getRefreshedToken($token->refreshToken);
+                $refreshedToken = null;
+                try {
+                    $refreshedToken = $this->getRefreshedToken($token->refreshToken);
 
-                if (!$refreshedToken) {
-                    $this->logger->debug('Refresh token is invalid.');
+                    if (!$refreshedToken) {
+                        $this->logger->debug('Refresh token is invalid.');
+                        throw new TokenInvalidException("Refresh token is invalid.");
+                    }
+                } catch (Exception $ex) {
+                    $this->logger->debug('Error occurred while refreshing the token: ' . $ex->getMessage());
+                    $this->removeIdentityCookie();
                     return null;
                 }
 
