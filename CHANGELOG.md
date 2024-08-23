@@ -1,3 +1,10 @@
+## [1.1.0](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.0.2...1.1.0) (2024-08-23)
+
+
+### Features
+
+* Add new anonymous consumer data model ([7409d4a](https://github.com/trustedshops-public/cot-php-integration-library/commit/7409d4a191de4602b3e06f3b36a52207446e08d4))
+
 ## [1.0.2](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.0.1...1.0.2) (2024-08-23)
 
 
