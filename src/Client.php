@@ -288,8 +288,10 @@ final class Client
 
     /**
      * @param string $idToken id token to get or refresh access token
-     * @return string|null
+     * @return string
      * @throws TokenNotFoundException if a valid token cannot be found in storage
+     * @throws TokenInvalidException if the token is invalid
+     * @throws UnexpectedErrorException if an unexpected error occurs
      */
     private function getOrRefreshAccessToken($idToken)
     {
@@ -315,25 +317,19 @@ final class Client
             }
 
             if ($shouldRefresh) {
-                $refreshedToken = null;
                 try {
                     $refreshedToken = $this->getRefreshedToken($token->refreshToken);
 
-                    if (!$refreshedToken) {
-                        $this->logger->debug('Refresh token is invalid.');
-                        throw new TokenInvalidException("Refresh token is invalid.");
-                    }
+                    $token->accessToken = $refreshedToken->accessToken;
+                    $this->setTokenOnStorage($refreshedToken);
+                    $this->logger->debug('Access token is refreshed. returning...');
+
+                    return $token->accessToken;
                 } catch (Exception $ex) {
                     $this->logger->debug('Error occurred while refreshing the token: ' . $ex->getMessage());
                     $this->removeIdentityCookie();
-                    return null;
+                    throw $ex;
                 }
-
-                $token->accessToken = $refreshedToken->accessToken;
-                $this->setTokenOnStorage($refreshedToken);
-                $this->logger->debug('Access token is refreshed. returning...');
-
-                return $token->accessToken;
             }
 
             $this->logger->debug('Access token is valid. returning...');
@@ -386,6 +382,10 @@ final class Client
      */
     private function decodeToken($token, $validateExp = true)
     {
+        if (!$token) {
+            throw new TokenInvalidException('Token cannot be empty or null.');
+        }
+
         if (!$validateExp) {
             $tks = explode('.', $token);
             return JWT::jsonDecode(JWT::urlsafeB64Decode($tks[1]));
