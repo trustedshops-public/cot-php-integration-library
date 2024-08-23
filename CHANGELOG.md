@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.0.1...1.0.2) (2024-08-23)
+
+
+### Bug Fixes
+
+* Improve token refreshing logic to avoid null exceptions ([31a1da9](https://github.com/trustedshops-public/cot-php-integration-library/commit/31a1da974f43eedb1ba7674e739d66b14572e9f8))
+
 ## [1.0.1](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.0.0...1.0.1) (2024-08-23)
 
 
