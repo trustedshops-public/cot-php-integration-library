@@ -3,13 +3,11 @@
 declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
-
 use TRSTD\COT\Client;
 use TRSTD\COT\Exception\RequiredParameterMissingException;
 use TRSTD\COT\AuthStorageInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Cache\CacheItemPoolInterface;
-
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use TRSTD\COT\Token;

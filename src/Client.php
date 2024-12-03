@@ -8,16 +8,13 @@ use Exception;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
-
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Phpfastcache\CacheManager;
 use Phpfastcache\Config\ConfigurationOption;
 use Monolog\Logger;
-
 use Psr\Log\LoggerInterface;
 use Psr\Cache\CacheItemPoolInterface;
-
 use TRSTD\COT\AuthStorageInterface;
 use TRSTD\COT\Token;
 use TRSTD\COT\ActionType;
