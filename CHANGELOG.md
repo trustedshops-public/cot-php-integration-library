@@ -1,3 +1,10 @@
+## [1.2.0](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.1.0...1.2.0) (2024-12-03)
+
+
+### Features
+
+* Add support for multiple environments ([#6](https://github.com/trustedshops-public/cot-php-integration-library/issues/6)) ([8b1f2d2](https://github.com/trustedshops-public/cot-php-integration-library/commit/8b1f2d22ece25f91a23574d5e6cb06e60180f799))
+
 ## [1.1.0](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.0.2...1.1.0) (2024-08-23)
 
 
