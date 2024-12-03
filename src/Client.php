@@ -29,14 +29,6 @@ use TRSTD\COT\Exception\TokenNotFoundException;
 use TRSTD\COT\Util\EncryptionUtils;
 use TRSTD\COT\Util\PKCEUtils;
 
-if (!defined('AUTH_SERVER_BASE_URI')) {
-    define('AUTH_SERVER_BASE_URI', 'https://auth-qa.trustedshops.com/auth/realms/myTS-QA/protocol/openid-connect/');
-}
-
-if (!defined('RESOURCE_SERVER_BASE_URI')) {
-    define('RESOURCE_SERVER_BASE_URI', 'https://scoped-cns-data.consumer-account-test.trustedshops.com/api/v1/');
-}
-
 CacheManager::setDefaultConfig(new ConfigurationOption([
     "path" => __DIR__ . "/cache"
 ]));
@@ -52,6 +44,24 @@ final class Client
 
     private const CONSUMER_ANONYMOUS_DATA_CACHE_KEY = 'CONSUMER_ANONYMOUS_DATA_';
     private const CONSUMER_ANONYMOUS_DATA_CACHE_TTL = 3600; // 1 hour
+
+    private const AUTH_SERVER_BASE_URI_DEV = 'https://auth-integr.trustedshops.com/auth/realms/myTS-DEV/protocol/openid-connect/';
+    private const AUTH_SERVER_BASE_URI_QA = 'https://auth-qa.trustedshops.com/auth/realms/myTS-QA/protocol/openid-connect/';
+    private const AUTH_SERVER_BASE_URI_PROD = 'https://auth.trustedshops.com/auth/realms/myTS/protocol/openid-connect/';
+
+    private const RESOURCE_SERVER_BASE_URI_DEV = 'https://scoped-cns-data.consumer-account-dev.trustedshops.com/api/v1/';
+    private const RESOURCE_SERVER_BASE_URI_QA = 'https://scoped-cns-data.consumer-account-test.trustedshops.com/api/v1/';
+    private const RESOURCE_SERVER_BASE_URI_PROD = 'https://scoped-cns-data.consumer-account.trustedshops.com/api/v1/';
+
+    /**
+     * @var string
+     */
+    private $authServerBaseUri;
+
+    /**
+     * @var string
+     */
+    private $resourceServerBaseUri;
 
     /**
      * @var string
@@ -93,9 +103,10 @@ final class Client
      * @param string $clientId client ID
      * @param string $clientSecret client secret
      * @param AuthStorageInterface $authStorage auth storage to store tokens
+     * @param string $env environment dev, qa, or prod
      * @throws RequiredParameterMissingException if any required parameter is missing
      */
-    public function __construct($tsId, $clientId, $clientSecret, AuthStorageInterface $authStorage = null)
+    public function __construct($tsId, $clientId, $clientSecret, AuthStorageInterface $authStorage = null, $env = 'prod')
     {
         if (!$tsId) {
             throw new RequiredParameterMissingException('TS ID is required.');
@@ -112,6 +123,9 @@ final class Client
         if (!$authStorage) {
             throw new RequiredParameterMissingException('AuthStorage is required.');
         }
+
+        $this->authServerBaseUri = $this->getAuthServerBaseUri($env);
+        $this->resourceServerBaseUri = $this->getResourceServerBaseUri($env);
 
         $this->tsId = $tsId;
         $this->clientId = $clientId;
@@ -160,7 +174,7 @@ final class Client
                 'Authorization: Bearer ' . $accessToken,
             ];
 
-            $response = $this->httpClient->request("GET", "anonymous-data" . ($this->tsId ? "?shopId=" . $this->tsId : ""), ['headers' => $headers, 'base_uri' => RESOURCE_SERVER_BASE_URI]);
+            $response = $this->httpClient->request("GET", "anonymous-data" . ($this->tsId ? "?shopId=" . $this->tsId : ""), ['headers' => $headers, 'base_uri' => $this->resourceServerBaseUri]);
             $consumerAnonymousData = json_decode($response->getContent());
 
             // cache the consumer anonymous data
@@ -200,6 +214,36 @@ final class Client
     public function setCacheItemPool(CacheItemPoolInterface $cacheItemPool)
     {
         $this->cacheItemPool = $cacheItemPool;
+    }
+
+    /**
+     * @param string $env environment dev, qa, or prod
+     * @return void
+     */
+    private function getAuthServerBaseUri($env = 'prod')
+    {
+        if ($env === 'dev') {
+            return self::AUTH_SERVER_BASE_URI_DEV;
+        } elseif ($env === 'qa') {
+            return self::AUTH_SERVER_BASE_URI_QA;
+        } else if ($env === 'prod') {
+            return self::AUTH_SERVER_BASE_URI_PROD;
+        }
+    }
+
+    /**
+     * @param string $env environment dev, qa, or prod
+     * @return void
+     */
+    private function getResourceServerBaseUri($env = 'prod')
+    {
+        if ($env === 'dev') {
+            return self::RESOURCE_SERVER_BASE_URI_DEV;
+        } elseif ($env === 'qa') {
+            return self::RESOURCE_SERVER_BASE_URI_QA;
+        } else if ($env === 'prod') {
+            return self::RESOURCE_SERVER_BASE_URI_PROD;
+        }
     }
 
     /**
@@ -251,7 +295,7 @@ final class Client
             'code_verifier' => $this->getCodeVerifierCookie(),
         ];
 
-        $response = $this->httpClient->request("POST", "token", ['headers' => $headers, 'body' => $data, 'base_uri' => AUTH_SERVER_BASE_URI]);
+        $response = $this->httpClient->request("POST", "token", ['headers' => $headers, 'body' => $data, 'base_uri' => $this->authServerBaseUri]);
         $responseJson = json_decode($response->getContent());
         if (!$responseJson || isset($responseJson->error)) {
             return null;
@@ -277,7 +321,7 @@ final class Client
             'refresh_token' => $refreshToken,
         ];
 
-        $response = $this->httpClient->request("POST", "token", ['headers' => $headers, 'body' => $data, 'base_uri' => AUTH_SERVER_BASE_URI]);
+        $response = $this->httpClient->request("POST", "token", ['headers' => $headers, 'body' => $data, 'base_uri' => $this->authServerBaseUri]);
         $responseJson = json_decode($response->getContent());
         if (!$responseJson || isset($responseJson->error)) {
             return null;
@@ -402,7 +446,7 @@ final class Client
         $cachedJWKSItem = $this->cacheItemPool->getItem(self::JWKS_CACHE_KEY);
 
         if (!$cachedJWKSItem->isHit()) {
-            $response = $this->httpClient->request("GET", "certs", ['base_uri' => AUTH_SERVER_BASE_URI]);
+            $response = $this->httpClient->request("GET", "certs", ['base_uri' => $this->authServerBaseUri]);
             $jwks = json_decode($response->getContent(), true);
             $cachedJWKSItem->set($jwks)->expiresAfter(self::JWKS_CACHE_TTL);
             $this->cacheItemPool->save($cachedJWKSItem);
