@@ -76,7 +76,7 @@ final class ClientTest extends TestCase
         $expectedRequests = [
             function ($method, $url, $options): MockResponse {
                 $this->assertSame('POST', $method);
-                $this->assertSame('https://auth-qa.trustedshops.com/auth/realms/myTS-QA/protocol/openid-connect/token', $url);
+                $this->assertSame('https://auth.trustedshops.com/auth/realms/myTS/protocol/openid-connect/token', $url);
                 $this->assertArrayHasKey('body', $options);
                 $this->assertArrayHasKey('headers', $options);
 
