@@ -218,7 +218,7 @@ final class Client
 
     /**
      * @param string $env environment dev, qa, or prod
-     * @return void
+     * @return string
      */
     private function getAuthServerBaseUri($env = 'prod')
     {
@@ -226,14 +226,16 @@ final class Client
             return self::AUTH_SERVER_BASE_URI_DEV;
         } elseif ($env === 'qa') {
             return self::AUTH_SERVER_BASE_URI_QA;
-        } else if ($env === 'prod') {
+        } elseif ($env === 'prod') {
             return self::AUTH_SERVER_BASE_URI_PROD;
         }
+
+        throw new Exception("Invalid environment.");
     }
 
     /**
      * @param string $env environment dev, qa, or prod
-     * @return void
+     * @return string
      */
     private function getResourceServerBaseUri($env = 'prod')
     {
@@ -241,9 +243,11 @@ final class Client
             return self::RESOURCE_SERVER_BASE_URI_DEV;
         } elseif ($env === 'qa') {
             return self::RESOURCE_SERVER_BASE_URI_QA;
-        } else if ($env === 'prod') {
+        } elseif ($env === 'prod') {
             return self::RESOURCE_SERVER_BASE_URI_PROD;
         }
+
+        throw new Exception("Invalid environment.");
     }
 
     /**
