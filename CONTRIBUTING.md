@@ -34,7 +34,7 @@ Pull requests are the best way to propose changes to the codebase. Here are the 
 - Use the present tense ("Add feature" not "Added feature")
 - Use the imperative mood ("Move cursor to..." not "Moves cursor to...")
 - Limit the first line to 72 characters or less
-- Reference issues and pull requests liberally after the first line - e.g. `fix: Correct issue #123`
+- Reference issues and pull requests liberally after the first line - e.g. `fix: correct issue #123`
 - Use conventional commits for commit messages [Conventional Commits](https://www.conventionalcommits.org)
 - Use the following prefixes for commit messages:
   - `feat:` for new features
