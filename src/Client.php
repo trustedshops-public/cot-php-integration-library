@@ -99,11 +99,11 @@ final class Client
      * @param string $tsId TS ID
      * @param string $clientId client ID
      * @param string $clientSecret client secret
-     * @param AuthStorageInterface $authStorage auth storage to store tokens
+     * @param AuthStorageInterface|null $authStorage auth storage to store tokens
      * @param string $env environment dev, qa, or prod
      * @throws RequiredParameterMissingException if any required parameter is missing
      */
-    public function __construct($tsId, $clientId, $clientSecret, AuthStorageInterface $authStorage = null, $env = 'prod')
+    public function __construct($tsId, $clientId, $clientSecret, ?AuthStorageInterface $authStorage = null, $env = 'prod')
     {
         if (!$tsId) {
             throw new RequiredParameterMissingException('TS ID is required.');

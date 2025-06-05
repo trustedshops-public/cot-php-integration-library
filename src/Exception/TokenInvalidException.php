@@ -14,7 +14,7 @@ final class TokenInvalidException extends RuntimeException
      * @param int $code The error code
      * @param Exception|null $previous The previous exception
      */
-    public function __construct($message = 'Unexpected error', $code = 0, Exception $previous = null)
+    public function __construct($message = 'Unexpected error', $code = 0, ?Exception $previous = null)
     {
         parent::__construct($message, $code, $previous);
     }
