@@ -1,3 +1,11 @@
+## [1.2.1](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.2.0...1.2.1) (2025-06-05)
+
+
+### Bug Fixes
+
+* Ignore ENV for PHP CS fixer ([6e04808](https://github.com/trustedshops-public/cot-php-integration-library/commit/6e048080f0c67801f39e5582d3bf30b7fa240aca))
+* PHPStan issues for PHP 8.4 ([edf99f4](https://github.com/trustedshops-public/cot-php-integration-library/commit/edf99f4e81211df0a5c0583eefc9b696b4b3defb))
+
 ## [1.2.0](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.1.0...1.2.0) (2024-12-03)
 
 
