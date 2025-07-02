@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.2.1...1.2.2) (2025-07-02)
+
+
+### Bug Fixes
+
+* use sub in AuthStorageInterface and implementations as primary key ([643ac90](https://github.com/trustedshops-public/cot-php-integration-library/commit/643ac9057eb09ead27df6994979d36253912baca))
+
 ## [1.2.1](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.2.0...1.2.1) (2025-06-05)
 
 
