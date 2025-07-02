@@ -7,21 +7,21 @@ use TRSTD\COT\Token;
 interface AuthStorageInterface
 {
     /**
-     * @param string $ctcId CTC ID
+     * @param string $sub Subject ID
      * @return Token|null
      */
-    public function get($ctcId);
+    public function get($sub);
 
     /**
-     * @param string $ctcId CTC ID
+     * @param string $sub Subject ID
      * @param Token $token Token object
      * @return void
      */
-    public function set($ctcId, Token $token);
+    public function set($sub, Token $token);
 
     /**
-     * @param string $ctcId CTC ID
+     * @param string $sub Subject ID
      * @return void
      */
-    public function remove($ctcId);
+    public function remove($sub);
 }

@@ -161,7 +161,7 @@ final class Client
             $decodedToken = $this->decodeToken($idToken, false);
 
             // check if the consumer anonymous data is cached
-            $cachedConsumerAnonymousDataItem = $this->cacheItemPool->getItem(self::CONSUMER_ANONYMOUS_DATA_CACHE_KEY . $decodedToken->ctc_id);
+            $cachedConsumerAnonymousDataItem = $this->cacheItemPool->getItem(self::CONSUMER_ANONYMOUS_DATA_CACHE_KEY . $decodedToken->sub);
             if ($cachedConsumerAnonymousDataItem->isHit()) {
                 return $cachedConsumerAnonymousDataItem->get();
             }
@@ -272,7 +272,7 @@ final class Client
         $idToken = $this->getIdentityCookie();
         if ($idToken) {
             $decodedToken = $this->decodeToken($idToken, false);
-            $this->authStorage->remove($decodedToken->ctc_id);
+            $this->authStorage->remove($decodedToken->sub);
             $this->removeIdentityCookie();
         }
     }
@@ -392,7 +392,7 @@ final class Client
     {
         try {
             $decodedToken = $this->decodeToken($token->idToken, false);
-            $this->authStorage->set($decodedToken->ctc_id, $token);
+            $this->authStorage->set($decodedToken->sub, $token);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
         } catch (Exception $ex) {
@@ -409,7 +409,7 @@ final class Client
     {
         try {
             $decodedToken = $this->decodeToken($idToken, false);
-            return $this->authStorage->get($decodedToken->ctc_id);
+            return $this->authStorage->get($decodedToken->sub);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
         } catch (Exception $ex) {

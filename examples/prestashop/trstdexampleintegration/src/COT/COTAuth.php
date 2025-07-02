@@ -9,7 +9,7 @@ class COTAuth extends ObjectModel
     /**
      * @var string
      */
-    public $id_ctc;
+    public $id_sub;
 
     /**
      * @var string
@@ -28,9 +28,9 @@ class COTAuth extends ObjectModel
 
     public static $definition = [
         'table' => 'trstd_cot_auth',
-        'primary' => 'id_ctc',
+        'primary' => 'id_sub',
         'fields' => [
-            'id_ctc' => [
+            'id_sub' => [
                 'type' => self::TYPE_STRING,
                 'required' => true,
                 'size' => 36,
