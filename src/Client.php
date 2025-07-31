@@ -18,7 +18,7 @@ use Psr\Cache\CacheItemPoolInterface;
 use TRSTD\COT\AuthStorageInterface;
 use TRSTD\COT\Token;
 use TRSTD\COT\ActionType;
-use TRSTD\COT\AnonymousConsumerData;
+use TRSTD\COT\ConsumerData;
 use TRSTD\COT\Exception\UnexpectedErrorException;
 use TRSTD\COT\Exception\RequiredParameterMissingException;
 use TRSTD\COT\Exception\TokenInvalidException;
@@ -39,8 +39,8 @@ final class Client
     private const JWKS_CACHE_KEY = 'JWKS';
     private const JWKS_CACHE_TTL = 3600; // 1 hour
 
-    private const CONSUMER_ANONYMOUS_DATA_CACHE_KEY = 'CONSUMER_ANONYMOUS_DATA_';
-    private const CONSUMER_ANONYMOUS_DATA_CACHE_TTL = 3600; // 1 hour
+    private const CONSUMER_DATA_CACHE_KEY = 'CONSUMER_DATA_';
+    private const CONSUMER_DATA_CACHE_TTL = 3600; // 1 hour
 
     private const AUTH_SERVER_BASE_URI_DEV = 'https://auth-integr.trustedshops.com/auth/realms/myTS-DEV/protocol/openid-connect/';
     private const AUTH_SERVER_BASE_URI_QA = 'https://auth-qa.trustedshops.com/auth/realms/myTS-QA/protocol/openid-connect/';
@@ -150,20 +150,20 @@ final class Client
     }
 
     /**
-     * returns the anonymous consumer data for the connected community user if any
-     * @return AnonymousConsumerData|null
+     * returns the consumer data for the connected community user if any
+     * @return ConsumerData|null
      */
-    public function getAnonymousConsumerData()
+    public function getConsumerData()
     {
         try {
             $idToken = $this->getIdentityCookie();
             $accessToken = $this->getOrRefreshAccessToken($idToken);
             $decodedToken = $this->decodeToken($idToken, false);
 
-            // check if the consumer anonymous data is cached
-            $cachedConsumerAnonymousDataItem = $this->cacheItemPool->getItem(self::CONSUMER_ANONYMOUS_DATA_CACHE_KEY . $decodedToken->sub);
-            if ($cachedConsumerAnonymousDataItem->isHit()) {
-                return $cachedConsumerAnonymousDataItem->get();
+            // check if the consumer data is cached
+            $cachedConsumerDataItem = $this->cacheItemPool->getItem(self::CONSUMER_DATA_CACHE_KEY . $decodedToken->sub);
+            if ($cachedConsumerDataItem->isHit()) {
+                return $cachedConsumerDataItem->get();
             }
 
             $headers = [
@@ -171,20 +171,21 @@ final class Client
                 'Authorization: Bearer ' . $accessToken,
             ];
 
-            $response = $this->httpClient->request("GET", "anonymous-data" . ($this->tsId ? "?shopId=" . $this->tsId : ""), ['headers' => $headers, 'base_uri' => $this->resourceServerBaseUri]);
-            $consumerAnonymousData = json_decode($response->getContent());
+            $response = $this->httpClient->request("GET", "consumer-data" . ($this->tsId ? "?shopId=" . $this->tsId : ""), ['headers' => $headers, 'base_uri' => $this->resourceServerBaseUri]);
+            $consumerData = json_decode($response->getContent());
 
-            // cache the consumer anonymous data
-            // TODO remove the caching feature when the pilot phase is over
-            $cachedConsumerAnonymousDataItem->set($consumerAnonymousData)->expiresAfter(self::CONSUMER_ANONYMOUS_DATA_CACHE_TTL);
-            $this->cacheItemPool->save($cachedConsumerAnonymousDataItem);
+            // cache the consumer data
+            $cachedConsumerDataItem->set($consumerData)->expiresAfter(self::CONSUMER_DATA_CACHE_TTL);
+            $this->cacheItemPool->save($cachedConsumerDataItem);
 
-            return $consumerAnonymousData;
+            return $consumerData;
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
             return null;
         }
     }
+
+
 
     /**
      * @param LoggerInterface $logger logger to set

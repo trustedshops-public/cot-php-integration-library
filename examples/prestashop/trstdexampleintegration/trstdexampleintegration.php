@@ -79,11 +79,11 @@ class trstdexampleintegration extends Module
         // Handle the OAuth2 callback
         $this->cotAuthClient->handleCallback();
 
-        // Get the anonymous consumer data
-        $anonymousConsumerData = $this->cotAuthClient->getAnonymousConsumerData();
+        // Get the consumer data
+        $consumerData = $this->cotAuthClient->getConsumerData();
 
         $this->smarty->assign([
-            'anonymousConsumerData' => $anonymousConsumerData
+            'consumerData' => $consumerData
         ]);
 
         return $this->fetch('module:trstdexampleintegration/views/templates/front/consumerdata.tpl');

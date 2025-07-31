@@ -43,8 +43,15 @@ $client = new Client(
 // Invoke handleCallback function to handle code coming from the authentication server
 $client->handleCallback();
 
-// Get anonymous consumer data for the current user
-$client->getAnonymousConsumerData();
+// Get consumer data for the current user
+$consumerData = $client->getConsumerData();
+
+// Access consumer information
+if ($consumerData) {
+    $firstName = $consumerData->getFirstName();
+    $membershipStatus = $consumerData->getMembershipStatus();
+    $membershipSince = $consumerData->getMembershipSince();
+}
 ```
 
 On the frontend side, place the following code in your HTML file where you want the widget to appear:

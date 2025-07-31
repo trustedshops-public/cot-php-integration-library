@@ -1,3 +1,20 @@
+## [1.3.0](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.2.2...1.3.0) (2025-01-XX)
+
+
+### Features
+
+* Replace anonymous endpoint with new consumer data endpoint ([#XX](https://github.com/trustedshops-public/cot-php-integration-library/issues/XX))
+  * Add new `ConsumerData` class with firstName, membershipStatus, and membershipSince fields
+  * Add new `getConsumerData()` method to replace `getAnonymousConsumerData()`
+  * Update endpoint from `anonymous-data` to `consumer-data`
+  * Update examples and documentation to use new consumer data endpoint
+
+### Breaking Changes
+
+* Remove deprecated `getAnonymousConsumerData()` method
+* Remove deprecated `AnonymousConsumerData` class
+* Remove deprecated anonymous endpoint constants
+
 ## [1.2.2](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.2.1...1.2.2) (2025-07-02)
 
 
