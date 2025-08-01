@@ -1,1 +1,1 @@
-{$anonymousConsumerData|@json_encode nofilter}
+{$consumerData|@json_encode nofilter}
