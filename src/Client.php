@@ -157,6 +157,10 @@ final class Client
     {
         try {
             $idToken = $this->getIdentityCookie();
+            if (!$idToken) {
+                return null;
+            }
+            
             $accessToken = $this->getOrRefreshAccessToken($idToken);
             $decodedToken = $this->decodeToken($idToken, false);
 
@@ -484,11 +488,11 @@ final class Client
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     private function getIdentityCookie()
     {
-        return $_COOKIE[self::IDENTITY_COOKIE_KEY];
+        return $_COOKIE[self::IDENTITY_COOKIE_KEY] ?? null;
     }
 
     /**
@@ -498,7 +502,7 @@ final class Client
     private function setIdentityCookie($idToken)
     {
         if (!headers_sent()) {
-            setcookie(self::IDENTITY_COOKIE_KEY, $idToken, strtotime("2038-01-1 00:00:00"), '/', $_SERVER['HTTP_HOST'], true, false);
+            setcookie(self::IDENTITY_COOKIE_KEY, $idToken, strtotime("2038-01-1 00:00:00"), '/', $this->getCookieDomain(), true, false);
         }
     }
 
@@ -508,7 +512,7 @@ final class Client
     private function removeIdentityCookie()
     {
         if (!headers_sent()) {
-            setcookie(self::IDENTITY_COOKIE_KEY, '', time() - 3600, '/', $_SERVER['HTTP_HOST'], true, false);
+            setcookie(self::IDENTITY_COOKIE_KEY, '', time() - 3600, '/', $this->getCookieDomain(), true, false);
         }
     }
 
@@ -521,8 +525,8 @@ final class Client
     {
         $encryptedCodeVerifier = EncryptionUtils::encryptValue($this->clientSecret, $codeVerifier);
         if (!headers_sent()) {
-            setcookie(self::CODE_VERIFIER_COOKIE_KEY, $encryptedCodeVerifier, 0, '/', $_SERVER['HTTP_HOST'], true, true);
-            setcookie(self::CODE_CHALLENGE_COOKIE_KEY, $codeChallenge, 0, '/', $_SERVER['HTTP_HOST'], true, false);
+            setcookie(self::CODE_VERIFIER_COOKIE_KEY, $encryptedCodeVerifier, 0, '/', $this->getCookieDomain(), true, true);
+            setcookie(self::CODE_CHALLENGE_COOKIE_KEY, $codeChallenge, 0, '/', $this->getCookieDomain(), true, false);
         }
     }
 
@@ -544,12 +548,23 @@ final class Client
      */
     private function getCodeVerifierCookie()
     {
-        $encryptedCodeVerifier = $_COOKIE[self::CODE_VERIFIER_COOKIE_KEY];
+        $encryptedCodeVerifier = $_COOKIE[self::CODE_VERIFIER_COOKIE_KEY] ?? null;
 
         if ($encryptedCodeVerifier) {
             return EncryptionUtils::decryptValue($this->clientSecret, $encryptedCodeVerifier);
         }
 
         return null;
+    }
+
+    /**
+     * Get the cookie domain by removing port from HTTP_HOST if present
+     * @return string
+     */
+    private function getCookieDomain()
+    {
+        $host = $_SERVER['HTTP_HOST'] ?? '';
+        // Remove port if present (e.g., "example.com:8080" becomes "example.com")
+        return explode(':', $host)[0];
     }
 }
