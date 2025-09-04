@@ -157,6 +157,10 @@ final class Client
     {
         try {
             $idToken = $this->getIdentityCookie();
+            if (!$idToken) {
+                return null;
+            }
+            
             $accessToken = $this->getOrRefreshAccessToken($idToken);
             $decodedToken = $this->decodeToken($idToken, false);
 
@@ -484,11 +488,11 @@ final class Client
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     private function getIdentityCookie()
     {
-        return $_COOKIE[self::IDENTITY_COOKIE_KEY];
+        return $_COOKIE[self::IDENTITY_COOKIE_KEY] ?? null;
     }
 
     /**
@@ -544,7 +548,7 @@ final class Client
      */
     private function getCodeVerifierCookie()
     {
-        $encryptedCodeVerifier = $_COOKIE[self::CODE_VERIFIER_COOKIE_KEY];
+        $encryptedCodeVerifier = $_COOKIE[self::CODE_VERIFIER_COOKIE_KEY] ?? null;
 
         if ($encryptedCodeVerifier) {
             return EncryptionUtils::decryptValue($this->clientSecret, $encryptedCodeVerifier);
