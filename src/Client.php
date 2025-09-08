@@ -131,7 +131,7 @@ final class Client
 
         $this->logger = new Logger("TRSTD/COT");
         $this->httpClient = HttpClient::create();
-        $this->cacheItemPool = CacheManager::getInstance('files');
+        $this->cacheItemPool = $this->createCompatibleCachePool();
     }
 
     /**
@@ -160,7 +160,7 @@ final class Client
             if (!$idToken) {
                 return null;
             }
-            
+
             $accessToken = $this->getOrRefreshAccessToken($idToken);
             $decodedToken = $this->decodeToken($idToken, false);
 
@@ -216,6 +216,39 @@ final class Client
     public function setCacheItemPool(CacheItemPoolInterface $cacheItemPool)
     {
         $this->cacheItemPool = $cacheItemPool;
+    }
+
+    /**
+     * Creates a compatible cache pool based on the current environment
+     * @return CacheItemPoolInterface
+     */
+    private function createCompatibleCachePool()
+    {
+        // Check if we're in a PrestaShop environment
+        if (defined('_PS_VERSION_') || class_exists('Cache') || class_exists('PrestaShop\\PrestaShop\\Core\\Cache\\Clearer\\CacheClearerInterface')) {
+            // PrestaShop environment detected - use a simple array cache to avoid compatibility issues
+            return new \TRSTD\COT\Cache\SimpleArrayCachePool();
+        }
+
+        // Check if we have strict PSR cache requirements (like Symfony/PrestaShop v9)
+        if (interface_exists('Psr\\Cache\\CacheItemPoolInterface')) {
+            $reflection = new \ReflectionClass('Psr\\Cache\\CacheItemPoolInterface');
+            $getItemMethod = $reflection->getMethod('getItem');
+            $parameters = $getItemMethod->getParameters();
+
+            // If getItem has strict string type hint, we need a compatible cache
+            if (isset($parameters[0]) && $parameters[0]->hasType() && $parameters[0]->getType()->getName() === 'string') {
+                return new \TRSTD\COT\Cache\SimpleArrayCachePool();
+            }
+        }
+
+        // Default to phpfastcache for backwards compatibility
+        try {
+            return CacheManager::getInstance('files');
+        } catch (\Exception $e) {
+            // Fallback to simple array cache if phpfastcache fails
+            return new \TRSTD\COT\Cache\SimpleArrayCachePool();
+        }
     }
 
     /**
