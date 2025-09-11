@@ -40,8 +40,7 @@ final class Client
     private const JWKS_CACHE_KEY = 'JWKS';
     private const JWKS_CACHE_TTL = 3600; // 1 hour
 
-    private const CONSUMER_DATA_CACHE_KEY = 'CONSUMER_DATA_';
-    private const CONSUMER_DATA_CACHE_TTL = 3600; // 1 hour
+
 
     private const AUTH_SERVER_BASE_URI_DEV = 'https://auth-integr.trustedshops.com/auth/realms/myTS-DEV/protocol/openid-connect/';
     private const AUTH_SERVER_BASE_URI_QA = 'https://auth-qa.trustedshops.com/auth/realms/myTS-QA/protocol/openid-connect/';
@@ -189,13 +188,6 @@ final class Client
             }
 
             $accessToken = $this->getOrRefreshAccessToken($idToken);
-            $decodedToken = $this->decodeToken($idToken, false);
-
-            // check if the consumer data is cached
-            $cachedConsumerDataItem = $this->cacheItemPool->getItem(self::CONSUMER_DATA_CACHE_KEY . $decodedToken->sub);
-            if ($cachedConsumerDataItem->isHit()) {
-                return $cachedConsumerDataItem->get();
-            }
 
             $headers = [
                 'Content-Type: application/json',
@@ -203,13 +195,8 @@ final class Client
             ];
 
             $response = $this->httpClient->request("GET", "consumer-data" . ($this->tsId ? "?shopId=" . $this->tsId : ""), ['headers' => $headers, 'base_uri' => $this->resourceServerBaseUri]);
-            $consumerData = json_decode($response->getContent());
 
-            // cache the consumer data
-            $cachedConsumerDataItem->set($consumerData)->expiresAfter(self::CONSUMER_DATA_CACHE_TTL);
-            $this->cacheItemPool->save($cachedConsumerDataItem);
-
-            return $consumerData;
+            return json_decode($response->getContent());
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
             return null;
