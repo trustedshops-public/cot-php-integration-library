@@ -10,8 +10,6 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Phpfastcache\CacheManager;
-use Phpfastcache\Config\ConfigurationOption;
 use Monolog\Logger;
 use Psr\Log\LoggerInterface;
 use Psr\Cache\CacheItemPoolInterface;
@@ -26,10 +24,6 @@ use TRSTD\COT\Exception\TokenNotFoundException;
 use TRSTD\COT\Util\EncryptionUtils;
 use TRSTD\COT\Util\PKCEUtils;
 use TRSTD\COT\Cache\SimpleArrayCachePool;
-
-CacheManager::setDefaultConfig(new ConfigurationOption([
-    "path" => __DIR__ . "/cache"
-]));
 
 final class Client
 {
@@ -101,13 +95,13 @@ final class Client
     private $cacheItemPool;
 
     /**
-     * Get or create a shared cache instance to avoid calling CacheManager::getInstance() multiple times
+     * Get or create a shared cache instance using in-memory caching for better performance
      * @return CacheItemPoolInterface
      */
     private static function getSharedCacheInstance(): CacheItemPoolInterface
     {
         if (self::$sharedCacheInstance === null) {
-            self::$sharedCacheInstance = CacheManager::getInstance('files');
+            self::$sharedCacheInstance = new SimpleArrayCachePool();
         }
         return self::$sharedCacheInstance;
     }

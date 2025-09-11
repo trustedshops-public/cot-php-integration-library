@@ -16,7 +16,7 @@
         "firebase/php-jwt": "^6",
         "phpseclib/phpseclib": "^3",
         "monolog/monolog": "^2",
-        "phpfastcache/phpfastcache": "^8",
+        "psr/cache": "^3.0",
         "symfony/http-client": "^5"
     },
     "require-dev": {

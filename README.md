@@ -76,7 +76,6 @@ This library is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [firebase/php-jwt](https://github.com/firebase/php-jwt) for JWT handling
 - [phpseclib/phpseclib](https://github.com/phpseclib/phpseclib) for security features
 - [monolog/monolog](https://github.com/Seldaek/monolog) for logging
-- [phpfastcache/phpfastcache](https://github.com/PHPSocialNetwork/phpfastcache) for caching solutions
 - [symfony/http-client](https://github.com/symfony/http-client) for HTTP client features
 
 ## Versioning
