@@ -1,3 +1,10 @@
+## [1.4.0](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.3.0...1.4.0) (2025-09-11)
+
+
+### Features
+
+* do not cache consumer data to avoid security issues ([cd5ab53](https://github.com/trustedshops-public/cot-php-integration-library/commit/cd5ab531ab2be47b3392ffcd3b8fc961360f236f))
+
 ## [1.3.0](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.2.2...1.3.0) (2025-09-11)
 
 
