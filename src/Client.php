@@ -187,7 +187,7 @@ final class Client
             if (!$idToken) {
                 return null;
             }
-            
+
             $accessToken = $this->getOrRefreshAccessToken($idToken);
             $decodedToken = $this->decodeToken($idToken, false);
 

@@ -49,4 +49,4 @@ final class ConsumerData
     {
         return $this->membershipSince;
     }
-} 
+}
