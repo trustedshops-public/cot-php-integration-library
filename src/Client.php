@@ -23,7 +23,7 @@ use TRSTD\COT\Exception\TokenInvalidException;
 use TRSTD\COT\Exception\TokenNotFoundException;
 use TRSTD\COT\Util\EncryptionUtils;
 use TRSTD\COT\Util\PKCEUtils;
-use TRSTD\COT\Cache\SimpleArrayCachePool;
+use TRSTD\COT\Util\Cache\SimpleArrayCachePool;
 
 final class Client
 {
