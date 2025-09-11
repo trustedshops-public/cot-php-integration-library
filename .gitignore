@@ -6,4 +6,3 @@ phpunit.xml
 .hg
 .phpunit.result.cache
 .phpunit.cache
-cache

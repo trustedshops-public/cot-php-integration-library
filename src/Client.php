@@ -10,8 +10,6 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Phpfastcache\CacheManager;
-use Phpfastcache\Config\ConfigurationOption;
 use Monolog\Logger;
 use Psr\Log\LoggerInterface;
 use Psr\Cache\CacheItemPoolInterface;
@@ -25,11 +23,7 @@ use TRSTD\COT\Exception\TokenInvalidException;
 use TRSTD\COT\Exception\TokenNotFoundException;
 use TRSTD\COT\Util\EncryptionUtils;
 use TRSTD\COT\Util\PKCEUtils;
-use TRSTD\COT\Cache\SimpleArrayCachePool;
-
-CacheManager::setDefaultConfig(new ConfigurationOption([
-    "path" => __DIR__ . "/cache"
-]));
+use TRSTD\COT\Util\Cache\SimpleArrayCachePool;
 
 final class Client
 {
@@ -40,8 +34,7 @@ final class Client
     private const JWKS_CACHE_KEY = 'JWKS';
     private const JWKS_CACHE_TTL = 3600; // 1 hour
 
-    private const CONSUMER_DATA_CACHE_KEY = 'CONSUMER_DATA_';
-    private const CONSUMER_DATA_CACHE_TTL = 3600; // 1 hour
+
 
     private const AUTH_SERVER_BASE_URI_DEV = 'https://auth-integr.trustedshops.com/auth/realms/myTS-DEV/protocol/openid-connect/';
     private const AUTH_SERVER_BASE_URI_QA = 'https://auth-qa.trustedshops.com/auth/realms/myTS-QA/protocol/openid-connect/';
@@ -50,11 +43,6 @@ final class Client
     private const RESOURCE_SERVER_BASE_URI_DEV = 'https://scoped-cns-data.consumer-account-dev.trustedshops.com/api/v1/';
     private const RESOURCE_SERVER_BASE_URI_QA = 'https://scoped-cns-data.consumer-account-test.trustedshops.com/api/v1/';
     private const RESOURCE_SERVER_BASE_URI_PROD = 'https://scoped-cns-data.consumer-account.trustedshops.com/api/v1/';
-
-    /**
-     * @var CacheItemPoolInterface|null
-     */
-    private static $sharedCacheInstance = null;
 
     /**
      * @var string
@@ -102,27 +90,6 @@ final class Client
     private $cacheItemPool;
 
     /**
-     * Get or create a shared cache instance to avoid calling CacheManager::getInstance() multiple times
-     * @return CacheItemPoolInterface
-     */
-    private static function getSharedCacheInstance(): CacheItemPoolInterface
-    {
-        if (self::$sharedCacheInstance === null) {
-            self::$sharedCacheInstance = CacheManager::getInstance('files');
-        }
-        return self::$sharedCacheInstance;
-    }
-
-    /**
-     * Clear the shared cache instance (useful for testing or forcing recreation)
-     * @return void
-     */
-    public static function clearSharedCacheInstance(): void
-    {
-        self::$sharedCacheInstance = null;
-    }
-
-    /**
      * @param string $tsId TS ID
      * @param string $clientId client ID
      * @param string $clientSecret client secret
@@ -158,7 +125,7 @@ final class Client
 
         $this->logger = new Logger("TRSTD/COT");
         $this->httpClient = HttpClient::create();
-        $this->cacheItemPool = self::getSharedCacheInstance();
+        $this->cacheItemPool = new SimpleArrayCachePool();
     }
 
     /**
@@ -189,13 +156,6 @@ final class Client
             }
 
             $accessToken = $this->getOrRefreshAccessToken($idToken);
-            $decodedToken = $this->decodeToken($idToken, false);
-
-            // check if the consumer data is cached
-            $cachedConsumerDataItem = $this->cacheItemPool->getItem(self::CONSUMER_DATA_CACHE_KEY . $decodedToken->sub);
-            if ($cachedConsumerDataItem->isHit()) {
-                return $cachedConsumerDataItem->get();
-            }
 
             $headers = [
                 'Content-Type: application/json',
@@ -203,13 +163,8 @@ final class Client
             ];
 
             $response = $this->httpClient->request("GET", "consumer-data" . ($this->tsId ? "?shopId=" . $this->tsId : ""), ['headers' => $headers, 'base_uri' => $this->resourceServerBaseUri]);
-            $consumerData = json_decode($response->getContent());
 
-            // cache the consumer data
-            $cachedConsumerDataItem->set($consumerData)->expiresAfter(self::CONSUMER_DATA_CACHE_TTL);
-            $this->cacheItemPool->save($cachedConsumerDataItem);
-
-            return $consumerData;
+            return json_decode($response->getContent());
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
             return null;
