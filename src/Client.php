@@ -25,6 +25,7 @@ use TRSTD\COT\Exception\TokenInvalidException;
 use TRSTD\COT\Exception\TokenNotFoundException;
 use TRSTD\COT\Util\EncryptionUtils;
 use TRSTD\COT\Util\PKCEUtils;
+use TRSTD\COT\Cache\SimpleArrayCachePool;
 
 CacheManager::setDefaultConfig(new ConfigurationOption([
     "path" => __DIR__ . "/cache"
@@ -49,6 +50,11 @@ final class Client
     private const RESOURCE_SERVER_BASE_URI_DEV = 'https://scoped-cns-data.consumer-account-dev.trustedshops.com/api/v1/';
     private const RESOURCE_SERVER_BASE_URI_QA = 'https://scoped-cns-data.consumer-account-test.trustedshops.com/api/v1/';
     private const RESOURCE_SERVER_BASE_URI_PROD = 'https://scoped-cns-data.consumer-account.trustedshops.com/api/v1/';
+
+    /**
+     * @var CacheItemPoolInterface|null
+     */
+    private static $sharedCacheInstance = null;
 
     /**
      * @var string
@@ -96,14 +102,36 @@ final class Client
     private $cacheItemPool;
 
     /**
+     * Get or create a shared cache instance to avoid calling CacheManager::getInstance() multiple times
+     * @return CacheItemPoolInterface
+     */
+    private static function getSharedCacheInstance(): CacheItemPoolInterface
+    {
+        if (self::$sharedCacheInstance === null) {
+            self::$sharedCacheInstance = CacheManager::getInstance('files');
+        }
+        return self::$sharedCacheInstance;
+    }
+
+    /**
+     * Clear the shared cache instance (useful for testing or forcing recreation)
+     * @return void
+     */
+    public static function clearSharedCacheInstance(): void
+    {
+        self::$sharedCacheInstance = null;
+    }
+
+    /**
      * @param string $tsId TS ID
      * @param string $clientId client ID
      * @param string $clientSecret client secret
      * @param AuthStorageInterface|null $authStorage auth storage to store tokens
      * @param string $env environment dev, qa, or prod
+     * @param CacheItemPoolInterface|null $cacheItemPool optional cache item pool
      * @throws RequiredParameterMissingException if any required parameter is missing
      */
-    public function __construct($tsId, $clientId, $clientSecret, ?AuthStorageInterface $authStorage = null, $env = 'prod')
+    public function __construct($tsId, $clientId, $clientSecret, ?AuthStorageInterface $authStorage = null, $env = 'prod', ?CacheItemPoolInterface $cacheItemPool = null)
     {
         if (!$tsId) {
             throw new RequiredParameterMissingException('TS ID is required.');
@@ -131,7 +159,7 @@ final class Client
 
         $this->logger = new Logger("TRSTD/COT");
         $this->httpClient = HttpClient::create();
-        $this->cacheItemPool = CacheManager::getInstance('files');
+        $this->cacheItemPool = $cacheItemPool ?: self::getSharedCacheInstance();
     }
 
     /**
