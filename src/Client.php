@@ -45,11 +45,6 @@ final class Client
     private const RESOURCE_SERVER_BASE_URI_PROD = 'https://scoped-cns-data.consumer-account.trustedshops.com/api/v1/';
 
     /**
-     * @var CacheItemPoolInterface|null
-     */
-    private static $sharedCacheInstance = null;
-
-    /**
      * @var string
      */
     private $authServerBaseUri;
@@ -95,27 +90,6 @@ final class Client
     private $cacheItemPool;
 
     /**
-     * Get or create a shared cache instance using in-memory caching for better performance
-     * @return CacheItemPoolInterface
-     */
-    private static function getSharedCacheInstance(): CacheItemPoolInterface
-    {
-        if (self::$sharedCacheInstance === null) {
-            self::$sharedCacheInstance = new SimpleArrayCachePool();
-        }
-        return self::$sharedCacheInstance;
-    }
-
-    /**
-     * Clear the shared cache instance (useful for testing or forcing recreation)
-     * @return void
-     */
-    public static function clearSharedCacheInstance(): void
-    {
-        self::$sharedCacheInstance = null;
-    }
-
-    /**
      * @param string $tsId TS ID
      * @param string $clientId client ID
      * @param string $clientSecret client secret
@@ -151,7 +125,7 @@ final class Client
 
         $this->logger = new Logger("TRSTD/COT");
         $this->httpClient = HttpClient::create();
-        $this->cacheItemPool = self::getSharedCacheInstance();
+        $this->cacheItemPool = new SimpleArrayCachePool();
     }
 
     /**
