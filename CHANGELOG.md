@@ -1,3 +1,10 @@
+## [1.3.0](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.2.2...1.3.0) (2025-09-11)
+
+
+### Features
+
+* introduce consumer data endpoint and remove deprecated anonymous data methods ([a268a7e](https://github.com/trustedshops-public/cot-php-integration-library/commit/a268a7e147eaf5987bd9c789c75d766b9c063f9e))
+
 ## [1.3.0](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.2.2...1.3.0) (2025-01-XX)
 
 
