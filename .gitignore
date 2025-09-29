@@ -6,3 +6,5 @@ phpunit.xml
 .hg
 .phpunit.result.cache
 .phpunit.cache
+
+test-environment/config.php
