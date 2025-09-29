@@ -35,15 +35,15 @@ help:
 # Docker Environment Commands
 dev:
 	@echo "🚀 Starting Docker environment with live development..."
-	@cd test-environment && ./dev-start.sh
+	@cd test-environment && ./docker-dev.sh
 
 start:
 	@echo "🚀 Starting Docker environment..."
-	@cd test-environment && ./start-docker.sh
+	@cd test-environment && ./docker-start.sh
 
 stop:
 	@echo "🛑 Stopping Docker environment..."
-	@cd test-environment && ./stop-docker.sh
+	@cd test-environment && ./docker-stop.sh
 
 restart: stop start
 
