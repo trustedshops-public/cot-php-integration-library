@@ -12,6 +12,9 @@ use TRSTD\COT\Util\SessionTokenStorage;
 use TRSTD\COT\Client;
 use TRSTD\COT\Token;
 
+// Load configuration
+$config = require_once 'config.php';
+
 // Handle AJAX requests
 if (isset($_GET['action'])) {
     // Set JSON header first
@@ -32,13 +35,13 @@ if (isset($_GET['action'])) {
     
     $sessionTokenStorage = new SessionTokenStorage();
     
-    // Create Client instance
+    // Create Client instance using configuration
     $client = new Client(
-        'X832CCBC339C1B6586599463D3C2C5DF5',
-        'trstd-switch-X832CCBC339C1B6586599463D3C2C5DF5',
-        'Yd51N9mJxczG2N0jFFwwMAncox5P0BUB',
+        $config['ts_id'],
+        $config['client_id'],
+        $config['client_secret'],
         $sessionTokenStorage,
-        'qa'
+        $config['environment']
     );
     
         switch ($_GET['action']) {

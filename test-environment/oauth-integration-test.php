@@ -1,3 +1,7 @@
+<?php
+// Load configuration
+$config = require_once 'config.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -80,14 +84,14 @@
         <h1>🔐 OAuth Integration Test</h1>
         
         <div class="status info">
-            <strong>Environment:</strong> QA<br>
-            <strong>TS ID:</strong> X832CCBC339C1B6586599463D3C2C5DF5
+            <strong>Environment:</strong> <?php echo strtoupper($config['environment']); ?><br>
+            <strong>TS ID:</strong> <?php echo $config['ts_id']; ?>
         </div>
 
         <div class="switch-container">
             <h3>TRSTD Switch Element</h3>
             <p>Click the switch below to authenticate and get OAuth tokens:</p>
-            <trstd-switch tsId="X832CCBC339C1B6586599463D3C2C5DF5"></trstd-switch>
+            <trstd-switch tsId="<?php echo $config['ts_id']; ?>"></trstd-switch>
         </div>
 
         <div id="status" class="status info">
