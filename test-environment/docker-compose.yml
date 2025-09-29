@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  test-environment:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cot-test-environment
+    ports:
+      - "8081:8081"
+    volumes:
+      # Mount source code for live sync
+      - ../src:/var/www/html/src:ro
+      - ../vendor:/var/www/html/vendor:ro
+      # Mount test environment for development
+      - .:/var/www/html/test-environment
+    environment:
+      - PHP_ENV=development
+    restart: unless-stopped
+    networks:
+      - cot-test-network
+
+networks:
+  cot-test-network:
+    driver: bridge
