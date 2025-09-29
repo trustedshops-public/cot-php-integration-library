@@ -38,7 +38,7 @@ echo "🔗 Test page: http://localhost:8081/oauth-integration-test.php"
 echo "🧪 Integration test: http://localhost:8081/oauth-integration-test.php"
 echo ""
 echo "📁 File watching is active - changes to src/ and vendor/ will be synced automatically"
-echo "🛑 To stop: ./rancher-stop.sh"
+echo "🛑 To stop: ./docker-stop.sh"
 echo "📊 To view logs: docker-compose logs -f"
 echo ""
 

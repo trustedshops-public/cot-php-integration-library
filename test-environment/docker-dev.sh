@@ -1,12 +1,27 @@
 #!/bin/bash
 
-echo "🚀 Starting COT Test Environment with Live Development..."
+echo "🐳 Starting COT Test Environment (Docker/Rancher Agnostic with Development Features)..."
+echo "📁 Setting up file watching and live sync..."
 echo ""
 
-# Check if Docker is running
+# Check if Docker is running (works with both Docker Desktop and Rancher Desktop)
 if ! docker info > /dev/null 2>&1; then
-    echo "❌ Docker is not running. Please start Docker first."
+    echo "❌ Docker is not running. Please start Docker Desktop or Rancher Desktop first."
+    echo "💡 Make sure Docker is running and accessible"
     exit 1
+fi
+
+# Detect Docker provider
+DOCKER_PROVIDER="Unknown"
+if docker context ls | grep -q "rancher-desktop"; then
+    DOCKER_PROVIDER="Rancher Desktop"
+    echo "🐄 Detected: Rancher Desktop"
+elif docker context ls | grep -q "desktop-linux"; then
+    DOCKER_PROVIDER="Docker Desktop"
+    echo "🐳 Detected: Docker Desktop"
+else
+    DOCKER_PROVIDER="Docker"
+    echo "🐳 Detected: Docker"
 fi
 
 # Stop any existing containers
@@ -31,7 +46,7 @@ if ! docker-compose ps | grep -q "Up"; then
 fi
 
 echo ""
-echo "✅ Test environment is running!"
+echo "✅ Test environment is running with $DOCKER_PROVIDER!"
 echo "🌐 Access at: http://localhost:8081"
 echo "🔗 Test page: http://localhost:8081/oauth-integration-test.php"
 echo "🧪 Integration test: http://localhost:8081/oauth-integration-test.php"
@@ -41,7 +56,7 @@ echo ""
 echo "🛠️  Development commands:"
 echo "   📊 View logs: docker-compose logs -f"
 echo "   🔄 Restart: docker-compose restart"
-echo "   🛑 Stop: ./stop-docker.sh"
+echo "   🛑 Stop: ./docker-stop.sh"
 echo "   🧹 Clean: docker-compose down -v"
 echo ""
 

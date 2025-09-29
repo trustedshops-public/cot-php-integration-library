@@ -31,13 +31,13 @@ help:
 
 # Docker Commands
 dev:
-	@./dev-start.sh
+	@./docker-dev.sh
 
 start:
-	@./start-docker.sh
+	@./docker-start.sh
 
 stop:
-	@./stop-docker.sh
+	@./docker-stop.sh
 
 restart: stop start
 
