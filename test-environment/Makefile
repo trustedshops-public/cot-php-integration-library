@@ -6,15 +6,14 @@
 help:
 	@echo "🧪 COT Test Environment - Development Commands"
 	@echo ""
-	@echo "🐳 Docker Commands:"
-	@echo "  make dev          - Start with live file watching"
-	@echo "  make start        - Start Docker environment"
-	@echo "  make stop         - Stop Docker environment"
-	@echo "  make restart      - Restart containers"
-	@echo "  make clean        - Clean up everything"
+	@echo "🚀 Quick Start:"
+	@echo "  make start        - Start local PHP server"
+	@echo "  make stop         - Stop local PHP server"
+	@echo "  make restart      - Restart local server"
 	@echo ""
-	@echo "🐳 Docker Commands (Agnostic):"
-	@echo "  make docker       - Start with Docker (Desktop/Rancher agnostic)"
+	@echo "🐳 Docker Commands:"
+	@echo "  make dev          - Start Docker with live file watching"
+	@echo "  make docker       - Start Docker environment (simple)"
 	@echo "  make docker-stop  - Stop Docker environment"
 	@echo "  make docker-logs  - View Docker logs"
 	@echo ""
@@ -23,20 +22,27 @@ help:
 	@echo "  make status       - Show container status"
 	@echo "  make build        - Build Docker image"
 	@echo "  make test         - Test environment"
+	@echo "  make clean        - Clean up everything"
 	@echo ""
-	@echo "🌐 Local Commands:"
-	@echo "  make local        - Start local PHP server"
-	@echo "  make local-stop    - Stop local PHP server"
-	@echo ""
+
+# Local Development Commands
+start:
+	@./start.sh
+
+stop:
+	@echo "🛑 Stopping local PHP server..."
+	@pkill -f "php -S localhost:8081" 2>/dev/null || true
+	@kill -9 $$(lsof -ti:8081) 2>/dev/null || true
+	@echo "✅ Local server stopped"
 
 # Docker Commands
 dev:
 	@./docker-dev.sh
 
-start:
+docker:
 	@./docker-start.sh
 
-stop:
+docker-stop:
 	@./docker-stop.sh
 
 restart: stop start
@@ -69,16 +75,11 @@ local:
 
 local-stop:
 	@echo "🛑 Stopping local PHP server..."
+	@pkill -f "php -S localhost:8081" 2>/dev/null || true
 	@kill -9 $$(lsof -ti:8081) 2>/dev/null || true
 	@echo "✅ Local server stopped"
 
 # Docker Commands (Agnostic)
-docker:
-	@./docker-start.sh
-
-docker-stop:
-	@./docker-stop.sh
-
 docker-logs:
 	@docker-compose logs -f
 

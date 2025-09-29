@@ -6,17 +6,16 @@
 help:
 	@echo "🚀 COT PHP Integration Library - Development Commands"
 	@echo ""
-	@echo "📦 Docker Environment:"
-	@echo "  make dev          - Start Docker environment with live file watching"
-	@echo "  make start        - Start Docker environment (simple)"
-	@echo "  make stop         - Stop Docker environment"
-	@echo "  make restart      - Restart Docker environment"
-	@echo "  make clean        - Stop and remove all containers/volumes"
+	@echo "🚀 Quick Start:"
+	@echo "  make start        - Start local PHP server"
+	@echo "  make stop         - Stop local PHP server"
+	@echo "  make restart      - Restart local server"
 	@echo ""
-	@echo "🐳 Docker (Agnostic):"
-	@echo "  make docker      - Start with Docker (Desktop/Rancher agnostic)"
-	@echo "  make docker-stop - Stop Docker environment"
-	@echo "  make docker-logs - View Docker logs"
+	@echo "🐳 Docker Environment:"
+	@echo "  make dev          - Start Docker with live file watching"
+	@echo "  make docker       - Start Docker environment (simple)"
+	@echo "  make docker-stop  - Stop Docker environment"
+	@echo "  make docker-logs  - View Docker logs"
 	@echo ""
 	@echo "🔧 Development:"
 	@echo "  make logs         - View container logs"
@@ -32,16 +31,27 @@ help:
 	@echo "  make docs         - Open documentation"
 	@echo ""
 
+# Local Development Commands
+start:
+	@echo "🚀 Starting local PHP server..."
+	@cd test-environment && ./start.sh
+
+stop:
+	@echo "🛑 Stopping local PHP server..."
+	@pkill -f "php -S localhost:8081" 2>/dev/null || true
+	@kill -9 $$(lsof -ti:8081) 2>/dev/null || true
+	@echo "✅ Local server stopped"
+
 # Docker Environment Commands
 dev:
 	@echo "🚀 Starting Docker environment with live development..."
 	@cd test-environment && ./docker-dev.sh
 
-start:
+docker:
 	@echo "🚀 Starting Docker environment..."
 	@cd test-environment && ./docker-start.sh
 
-stop:
+docker-stop:
 	@echo "🛑 Stopping Docker environment..."
 	@cd test-environment && ./docker-stop.sh
 
