@@ -1,6 +1,6 @@
 # COT PHP Integration Library - Development Makefile
 
-.PHONY: help dev start stop clean test logs status build
+.PHONY: help dev start stop clean test logs status build restart local local-stop docker docker-stop docker-logs open quick
 
 # Default target
 help:
@@ -22,6 +22,7 @@ help:
 	@echo "  make status       - Show container status"
 	@echo "  make build        - Build Docker image"
 	@echo "  make test         - Run tests"
+	@echo "  make open         - Open test page in browser"
 	@echo ""
 	@echo "🌐 Local Development:"
 	@echo "  make local        - Start local PHP server"
@@ -42,6 +43,8 @@ stop:
 	@kill -9 $$(lsof -ti:8081) 2>/dev/null || true
 	@echo "✅ Local server stopped"
 
+restart: stop start
+
 # Docker Environment Commands
 dev:
 	@echo "🚀 Starting Docker environment with live development..."
@@ -55,12 +58,9 @@ docker-stop:
 	@echo "🛑 Stopping Docker environment..."
 	@cd test-environment && ./docker-stop.sh
 
-restart: stop start
-
-clean:
-	@echo "🧹 Cleaning up Docker environment..."
-	@cd test-environment && docker-compose down -v --remove-orphans
-	@docker system prune -f
+docker-logs:
+	@echo "📊 Viewing Docker logs..."
+	@cd test-environment && docker-compose logs -f
 
 # Development Commands
 logs:
@@ -76,9 +76,8 @@ build:
 	@cd test-environment && docker-compose build
 
 test:
-	@echo "🧪 Running tests..."
-	@cd test-environment && docker-compose exec test-environment php -v
-	@echo "✅ Container is running and accessible"
+	@echo "🧪 Testing environment..."
+	@curl -s http://localhost:8081/oauth-integration-test.php > /dev/null && echo "✅ Test page accessible" || echo "❌ Test page not accessible"
 
 # Local Development Commands
 local:
@@ -90,8 +89,22 @@ local:
 
 local-stop:
 	@echo "🛑 Stopping local PHP server..."
+	@pkill -f "php -S localhost:8081" 2>/dev/null || true
 	@kill -9 $$(lsof -ti:8081) 2>/dev/null || true
 	@echo "✅ Local server stopped"
+
+# Clean up
+clean:
+	@echo "🧹 Cleaning up Docker environment..."
+	@cd test-environment && docker-compose down -v --remove-orphans
+	@docker system prune -f
+
+# Open browser
+open:
+	@echo "🌐 Opening test page..."
+	@open http://localhost:8081/oauth-integration-test.php 2>/dev/null || \
+		xdg-open http://localhost:8081/oauth-integration-test.php 2>/dev/null || \
+		echo "📖 Please open http://localhost:8081/oauth-integration-test.php manually"
 
 # Documentation
 docs:
@@ -99,16 +112,6 @@ docs:
 	@open test-environment/README.md 2>/dev/null || \
 		xdg-open test-environment/README.md 2>/dev/null || \
 		echo "📖 Please open test-environment/README.md manually"
-
-# Docker Commands (Agnostic)
-docker:
-	@cd test-environment && ./docker-start.sh
-
-docker-stop:
-	@cd test-environment && ./docker-stop.sh
-
-docker-logs:
-	@cd test-environment && docker-compose logs -f
 
 # Quick development workflow
 quick: clean dev
