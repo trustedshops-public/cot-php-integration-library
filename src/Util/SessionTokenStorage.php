@@ -9,7 +9,7 @@ use TRSTD\COT\Token;
 
 /**
  * Session-based token storage implementation
- * 
+ *
  * This class stores authentication tokens in PHP sessions,
  * making them accessible to the backend for API calls.
  */
@@ -30,7 +30,7 @@ class SessionTokenStorage implements AuthStorageInterface
 
     /**
      * Get authentication token from session storage.
-     * 
+     *
      * @param string $sub The user ID (subject from JWT)
      * @return Token|null The token if found, null otherwise
      */
@@ -41,7 +41,7 @@ class SessionTokenStorage implements AuthStorageInterface
         }
 
         $tokenData = $_SESSION[$this->sessionKey][$sub];
-        
+
         // We need at least an access token
         if (!isset($tokenData['access_token'])) {
             return null;
@@ -49,7 +49,7 @@ class SessionTokenStorage implements AuthStorageInterface
 
         // Get ID token from stored data
         $idToken = $tokenData['id_token'] ?? '';
-        
+
         return new Token(
             $idToken,
             $tokenData['refresh_token'] ?? '',
@@ -59,7 +59,7 @@ class SessionTokenStorage implements AuthStorageInterface
 
     /**
      * Set authentication token in session storage.
-     * 
+     *
      * @param string $sub The user ID (subject from JWT)
      * @param Token $token The token to store
      */
@@ -79,7 +79,7 @@ class SessionTokenStorage implements AuthStorageInterface
 
     /**
      * Remove authentication token from session storage.
-     * 
+     *
      * @param string $sub The user ID (subject from JWT)
      */
     public function remove($sub): void
@@ -91,7 +91,7 @@ class SessionTokenStorage implements AuthStorageInterface
 
     /**
      * Check if user is authenticated (has valid tokens).
-     * 
+     *
      * @return bool True if authenticated, false otherwise
      */
     public function isAuthenticated(): bool
