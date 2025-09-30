@@ -118,19 +118,4 @@ class SessionTokenStorage implements AuthStorageInterface
     {
         $_SESSION[$this->sessionKey] = [];
     }
-
-    /**
-     * Get debug information about stored tokens.
-     * 
-     * @return array Debug information
-     */
-    public function getDebugInfo(): array
-    {
-        return [
-            'session_key' => $this->sessionKey,
-            'session_tokens' => $_SESSION[$this->sessionKey] ?? [],
-            'is_authenticated' => $this->isAuthenticated(),
-            'user_count' => count($_SESSION[$this->sessionKey] ?? [])
-        ];
-    }
 }
