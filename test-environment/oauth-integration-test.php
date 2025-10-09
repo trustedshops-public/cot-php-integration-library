@@ -40,6 +40,30 @@ $config = require_once 'config.php';
             margin-top: 20px;
             font-family: monospace;
             font-size: 12px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        .debug pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+            overflow-x: auto;
+            background: #fff;
+            padding: 10px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+        }
+        .debug p {
+            margin: 5px 0;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .debug span {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
         .status {
             padding: 10px;
@@ -112,10 +136,10 @@ $config = require_once 'config.php';
         <div class="debug">
             <h4>Debug Information:</h4>
             <div id="debug-info">
-                <p>Switch element loaded: <span id="switch-loaded">Checking...</span></p>
-                <p>Current URL: <span id="current-url"><?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?></span></p>
-                <p>URL Fragment: <span id="url-fragment"><?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?></span></p>
-                <p>Tokens stored: <span id="tokens-stored">No</span></p>
+                <p><strong>Switch element loaded:</strong> <span id="switch-loaded">Checking...</span></p>
+                <p><strong>Current URL:</strong><br><span id="current-url" style="display: block; margin-top: 5px;"><?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?></span></p>
+                <p><strong>URL Fragment:</strong><br><span id="url-fragment" style="display: block; margin-top: 5px;">No fragment</span></p>
+                <p><strong>Tokens stored:</strong> <span id="tokens-stored">No</span></p>
             </div>
         </div>
     </div>
@@ -139,7 +163,14 @@ $config = require_once 'config.php';
 
             // Update URL fragment display
             const urlFragment = document.getElementById('url-fragment');
-            urlFragment.textContent = window.location.hash || 'No fragment';
+            const hash = window.location.hash;
+            if (hash) {
+                // Format long URLs with line breaks for better readability
+                const formattedHash = hash.replace(/&/g, '&\n').replace(/=/g, '=\n');
+                urlFragment.innerHTML = '<pre style="white-space: pre-wrap; word-wrap: break-word; font-size: 10px; max-width: 100%; overflow-x: auto;">' + formattedHash + '</pre>';
+            } else {
+                urlFragment.textContent = 'No fragment';
+            }
 
             // Check for OAuth tokens in URL fragment on page load
             extractTokensFromUrl();
@@ -296,6 +327,31 @@ $config = require_once 'config.php';
                         document.getElementById('tokens-stored').textContent = 'No';
                         document.getElementById('tokens-stored').style.color = 'red';
                         document.getElementById('consumer-data').style.display = 'none';
+                        
+                        // Clear URL fragment to remove OAuth tokens from browser history
+                        if (window.location.hash) {
+                            // Use replaceState to avoid adding to browser history
+                            window.history.replaceState(null, null, window.location.pathname + window.location.search);
+                        }
+                        
+                        // Force TRSTD Switch to reset by recreating it
+                        const switchElement = document.querySelector('trstd-switch');
+                        if (switchElement) {
+                            const parent = switchElement.parentNode;
+                            const nextSibling = switchElement.nextSibling;
+                            const tsId = switchElement.getAttribute('tsId');
+                            
+                            // Remove the current switch
+                            switchElement.remove();
+                            
+                            // Create a new switch element (this will reset its internal state)
+                            const newSwitch = document.createElement('trstd-switch');
+                            newSwitch.setAttribute('tsId', tsId);
+                            parent.insertBefore(newSwitch, nextSibling);
+                            
+                            // Update debug info
+                            document.getElementById('url-fragment').textContent = 'No fragment';
+                        }
                     } else {
                         updateStatus('error', 'Failed to logout: ' + data.message);
                     }
