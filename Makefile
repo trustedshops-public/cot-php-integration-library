@@ -1,6 +1,6 @@
 # COT PHP Integration Library - Development Makefile
 
-.PHONY: help dev start stop clean test logs status build restart local local-stop docker docker-stop docker-logs open quick
+.PHONY: help dev start stop clean test logs status build restart docker docker-stop docker-logs open quick
 
 # Default target
 help:
@@ -15,7 +15,6 @@ help:
 	@echo "  make dev          - Start Docker with live file watching"
 	@echo "  make docker       - Start Docker environment (simple)"
 	@echo "  make docker-stop  - Stop Docker environment"
-	@echo "  make docker-logs  - View Docker logs"
 	@echo ""
 	@echo "🔧 Development:"
 	@echo "  make logs         - View container logs"
@@ -23,10 +22,6 @@ help:
 	@echo "  make build        - Build Docker image"
 	@echo "  make test         - Run tests"
 	@echo "  make open         - Open test page in browser"
-	@echo ""
-	@echo "🌐 Local Development:"
-	@echo "  make local        - Start local PHP server"
-	@echo "  make local-stop   - Stop local PHP server"
 	@echo ""
 	@echo "📚 Documentation:"
 	@echo "  make docs         - Open documentation"
@@ -58,10 +53,6 @@ docker-stop:
 	@echo "🛑 Stopping Docker environment..."
 	@cd test-environment && ./docker-stop.sh
 
-docker-logs:
-	@echo "📊 Viewing Docker logs..."
-	@cd test-environment && docker-compose logs -f
-
 # Development Commands
 logs:
 	@echo "📊 Viewing container logs..."
@@ -80,18 +71,6 @@ test:
 	@curl -s http://localhost:8081/oauth-integration-test.php > /dev/null && echo "✅ Test page accessible" || echo "❌ Test page not accessible"
 
 # Local Development Commands
-local:
-	@echo "🌐 Starting local PHP server..."
-	@cd test-environment && php -S localhost:8081 -t . &
-	@echo "✅ Local server started at http://localhost:8081"
-	@echo "🔗 Test page: http://localhost:8081/oauth-integration-test.php"
-	@echo "🛑 To stop: make local-stop"
-
-local-stop:
-	@echo "🛑 Stopping local PHP server..."
-	@pkill -f "php -S localhost:8081" 2>/dev/null || true
-	@kill -9 $$(lsof -ti:8081) 2>/dev/null || true
-	@echo "✅ Local server stopped"
 
 # Clean up
 clean:
@@ -117,10 +96,6 @@ docs:
 quick: clean dev
 	@echo "🎯 Quick development environment ready!"
 
-# Production-like testing
-prod-test:
-	@echo "🏭 Running production-like test..."
-	@cd test-environment && docker-compose -f docker-compose.yml -f docker-compose.prod.yml up --build
 
 # Install dependencies
 install:
@@ -146,3 +121,4 @@ fix:
 security:
 	@echo "🔒 Running security audit..."
 	@composer audit
+

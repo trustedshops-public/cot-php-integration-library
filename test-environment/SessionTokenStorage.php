@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-namespace TRSTD\COT\Util;
-
 use TRSTD\COT\AuthStorageInterface;
 use TRSTD\COT\Token;
 

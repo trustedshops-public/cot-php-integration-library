@@ -23,16 +23,13 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 
 # Copy composer files
-COPY ../composer.json ../composer.lock ./
+COPY composer.json composer.lock ./
 
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Copy source code
-COPY ../src ./src
-
 # Copy test environment files
-COPY . ./test-environment/
+COPY test-environment/ ./test-environment/
 
 # Install file watcher
 RUN apt-get update && apt-get install -y \
@@ -41,7 +38,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Create sync script for file watching
-COPY sync-changes.sh /usr/local/bin/sync-changes.sh
+COPY test-environment/sync-changes.sh /usr/local/bin/sync-changes.sh
 RUN chmod +x /usr/local/bin/sync-changes.sh
 
 # Expose port

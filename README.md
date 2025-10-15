@@ -63,6 +63,71 @@ On the frontend side, place the following code in your HTML file where you want 
 
 For more detailed examples, please refer to the [`examples/`](./examples/) directory.
 
+## Development
+
+### Prerequisites
+
+- PHP >= 7.4
+- Composer
+- Docker (optional, for containerized development)
+
+### Setup
+
+1. **Install dependencies:**
+   ```bash
+   composer install
+   ```
+
+2. **Start development environment:**
+   ```bash
+   # Option 1: Local PHP server
+   make start
+   
+   # Option 2: Docker environment
+   make dev
+   ```
+
+### Development Commands
+
+The project includes a comprehensive Makefile with the following commands:
+
+#### 🚀 Quick Start
+- `make start` - Start local PHP server
+- `make stop` - Stop local PHP server
+- `make restart` - Restart local server
+
+#### 🐳 Docker Environment
+- `make dev` - Start Docker with live file watching
+- `make docker` - Start Docker environment (simple)
+- `make docker-stop` - Stop Docker environment
+- `make docker-logs` - View Docker logs
+
+#### 🔧 Development
+- `make logs` - View container logs
+- `make status` - Show container status
+- `make open` - Open test page in browser
+
+#### 📚 Documentation
+- `make docs` - Open documentation
+
+### Testing
+
+The project includes a test environment for development and testing:
+
+1. **Start the test environment:**
+   ```bash
+   make start
+   ```
+
+2. **Access the test page:**
+   Open `http://localhost:8081/oauth-integration-test.php` in your browser
+
+3. **Run automated tests:**
+   ```bash
+   make test
+   ```
+
+
 ## Contributing
 
 Contributions are welcome! Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines.

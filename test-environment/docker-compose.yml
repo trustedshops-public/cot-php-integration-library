@@ -1,15 +1,13 @@
-version: '3.8'
-
 services:
   test-environment:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: test-environment/Dockerfile
     container_name: cot-test-environment
     ports:
       - "8081:8081"
     volumes:
-      # Mount source code for live sync
+      # Mount source code for live sync (direct from original directories)
       - ../src:/var/www/html/src:ro
       - ../vendor:/var/www/html/vendor:ro
       # Mount test environment for development

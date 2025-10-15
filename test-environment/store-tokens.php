@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require_once '../vendor/autoload.php';
 
-use TRSTD\COT\Util\SessionTokenStorage;
+use SessionTokenStorage;
 use TRSTD\COT\Token;
 
 // Set content type to JSON
