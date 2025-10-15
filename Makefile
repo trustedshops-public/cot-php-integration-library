@@ -1,6 +1,6 @@
 # COT PHP Integration Library - Development Makefile
 
-.PHONY: help dev start stop clean test logs status build restart docker docker-stop docker-logs open quick
+.PHONY: help dev start stop clean test logs status build restart docker docker-stop docker-logs open quick debug debug-stop
 
 # Default target
 help:
@@ -15,6 +15,11 @@ help:
 	@echo "  make dev          - Start Docker with live file watching"
 	@echo "  make docker       - Start Docker environment (simple)"
 	@echo "  make docker-stop  - Stop Docker environment"
+	@echo ""
+	@echo "🐛 Debugging:"
+	@echo "  make debug        - Start Docker with Xdebug enabled"
+	@echo "  make debug-stop    - Stop debug environment"
+	@echo "  make debug-logs    - Check Xdebug logs"
 	@echo ""
 	@echo "🔧 Development:"
 	@echo "  make logs         - View container logs"
@@ -52,6 +57,22 @@ docker:
 docker-stop:
 	@echo "🛑 Stopping Docker environment..."
 	@cd test-environment && ./docker-stop.sh
+
+# Debug Commands
+debug:
+	@echo "🐛 Starting Docker environment with Xdebug enabled..."
+	@cd test-environment && ./docker-dev.sh
+	@echo "🔗 Debug environment ready!"
+	@echo "📝 Set breakpoints in Cursor IDE and start debugging session (F5)"
+	@echo "🌐 Test page: http://localhost:8081/oauth-integration-test.php"
+
+debug-stop:
+	@echo "🛑 Stopping debug environment..."
+	@cd test-environment && ./docker-stop.sh
+
+debug-logs:
+	@echo "📋 Checking Xdebug logs..."
+	@cd test-environment && docker-compose exec test-environment cat /tmp/xdebug.log 2>/dev/null || echo "No Xdebug log found"
 
 # Development Commands
 logs:

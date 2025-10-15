@@ -39,3 +39,22 @@ make restart
 
 ### **Test URL:**
 - **Test Page**: http://localhost:8081/oauth-integration-test.php
+
+## 🐛 Debugging:
+
+### **Start Debug Environment:**
+```bash
+make debug
+```
+
+### **Debug Workflow:**
+1. Start debug environment: `make debug`
+2. Set breakpoints in your PHP code
+3. Start debugging session in IDE
+4. Visit test page: http://localhost:8081/oauth-integration-test.php
+5. Code will pause at breakpoints for inspection
+
+### **Stop Debug Environment:**
+```bash
+make debug-stop
+```

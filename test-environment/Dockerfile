@@ -16,6 +16,9 @@ RUN apt-get update && apt-get install -y \
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
+# Install Xdebug for debugging
+RUN pecl install xdebug && docker-php-ext-enable xdebug
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -30,6 +33,9 @@ RUN composer install --no-dev --optimize-autoloader
 
 # Copy test environment files
 COPY test-environment/ ./test-environment/
+
+# Copy Xdebug configuration
+COPY test-environment/xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
 
 # Install file watcher
 RUN apt-get update && apt-get install -y \

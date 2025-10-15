@@ -6,6 +6,7 @@ services:
     container_name: cot-test-environment
     ports:
       - "8081:8081"
+      - "9003:9003"  # Xdebug port
     volumes:
       # Mount source code for live sync (direct from original directories)
       - ../src:/var/www/html/src:ro
@@ -14,6 +15,7 @@ services:
       - .:/var/www/html/test-environment
     environment:
       - PHP_ENV=development
+      - XDEBUG_MODE=debug
     restart: unless-stopped
     networks:
       - cot-test-network
