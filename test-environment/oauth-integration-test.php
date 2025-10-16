@@ -259,9 +259,12 @@ $cookieSet = isset($_COOKIE['TRSTD_ID_TOKEN']);
             .then(data => {
                 if (data.success) {
                     console.log('Tokens stored successfully:', data);
-                    updateStatus('success', '🎉 OAuth tokens stored successfully!');
+                    updateStatus('success', '🎉 OAuth tokens stored successfully! Redirecting...');
                     document.getElementById('tokens-stored').textContent = 'Yes';
                     document.getElementById('tokens-stored').style.color = 'green';
+                    
+                    // Redirect to same page to trigger server-side getConsumerData()
+                    window.location.reload();
                 } else {
                     console.error('Failed to store tokens:', data.error);
                     updateStatus('error', 'Failed to store tokens: ' + data.error);
