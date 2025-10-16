@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 require_once '../vendor/autoload.php';
+require_once 'SessionTokenStorage.php';
 
-use SessionTokenStorage;
 use TRSTD\COT\Token;
 
 // Set content type to JSON
@@ -43,7 +43,7 @@ try {
     }
 
     // Create session token storage
-    $tokenStorage = new SessionTokenStorage();
+    $tokenStorage = new \SessionTokenStorage();
     
     // Create token object
     $token = new Token(
@@ -68,7 +68,7 @@ try {
     }
     
     // Return success response
-    echo json_encode([
+    $response = [
         'success' => true,
         'message' => 'OAuth tokens stored successfully',
         'user_id' => $input['user_id'],
@@ -76,10 +76,13 @@ try {
         'has_id_token' => !empty($input['id_token']),
         'has_refresh_token' => !empty($input['refresh_token']),
         'cookie_set' => !empty($input['id_token'])
-    ]);
+    ];
+    
+    echo json_encode($response);
 
 } catch (Exception $e) {
     http_response_code(400);
+    
     echo json_encode([
         'success' => false,
         'error' => $e->getMessage()
