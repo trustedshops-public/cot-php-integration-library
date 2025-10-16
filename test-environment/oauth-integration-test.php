@@ -21,16 +21,7 @@ $client = new Client(
     $config['environment']
 );
 
-// Handle OAuth callback - this processes the authorization code
-// Note: Disabled for now due to redirect_uri mismatch with TRSTD Switch widget
-// The widget uses http://localhost:8081 but library constructs https://hostname:8081
-// $client->handleCallback();
 
-// Handle URL fragment tokens (for TRSTD Switch widget)
-// Since URL fragments are not sent to the server, we need to handle them via JavaScript
-// But we can also check if there are query parameters for authorization code flow
-
-// Get consumer data if authenticated
 $consumerData = $client->getConsumerData();
 
 // Debug: Check what's in session storage
@@ -199,8 +190,6 @@ $cookieSet = isset($_COOKIE['TRSTD_ID_TOKEN']);
                 switchLoaded.textContent = 'Yes';
                 switchLoaded.style.color = 'green';
                 
-                // Configure the widget to use authorization code flow (query parameters)
-                // instead of implicit flow (URL fragments)
                 switchElement.redirectUrl = window.location.origin + window.location.pathname;
                 console.log('TRSTD Switch configured with redirectUrl:', switchElement.redirectUrl);
             } else {
@@ -219,8 +208,6 @@ $cookieSet = isset($_COOKIE['TRSTD_ID_TOKEN']);
                 urlFragment.textContent = 'No fragment';
             }
 
-            // OAuth callback is handled by PHP handleCallback() method on every page load
-            // But we also need to handle URL fragment tokens from TRSTD Switch widget
             extractAndStoreTokens();
         });
 
