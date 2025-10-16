@@ -1,6 +1,41 @@
 <?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/SessionTokenStorage.php';
+
+use TRSTD\COT\Client;
+
 // Load configuration
 $config = require_once 'config.php';
+
+// Start session
+session_start();
+
+// Initialize client
+$client = new Client(
+    $config['ts_id'],
+    $config['client_id'],
+    $config['client_secret'],
+    new SessionTokenStorage(),
+    $config['environment']
+);
+
+// Handle OAuth callback - this processes the authorization code
+// Note: Disabled for now due to redirect_uri mismatch with TRSTD Switch widget
+// The widget uses http://localhost:8081 but library constructs https://hostname:8081
+// $client->handleCallback();
+
+// Handle URL fragment tokens (for TRSTD Switch widget)
+// Since URL fragments are not sent to the server, we need to handle them via JavaScript
+// But we can also check if there are query parameters for authorization code flow
+
+// Get consumer data if authenticated
+$consumerData = $client->getConsumerData();
+
+// Debug: Check what's in session storage
+$sessionData = $_SESSION['trstd_tokens'] ?? [];
+$cookieSet = isset($_COOKIE['TRSTD_ID_TOKEN']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -112,36 +147,43 @@ $config = require_once 'config.php';
             <strong>TS ID:</strong> <?php echo $config['ts_id']; ?>
         </div>
 
-        <div class="switch-container">
-            <h3>TRSTD Switch Element</h3>
-            <p>Click the switch below to authenticate and get OAuth tokens:</p>
-            <trstd-switch tsId="<?php echo $config['ts_id']; ?>"></trstd-switch>
-        </div>
+            <div class="switch-container">
+                <h3>TRSTD Switch Element</h3>
+                <p>Click the switch below to authenticate and get OAuth tokens:</p>
+                <trstd-switch tsId="<?php echo $config['ts_id']; ?>" id="trstd-switch"></trstd-switch>
+            </div>
 
         <div id="status" class="status info">
-            <strong>Status:</strong> Waiting for user interaction...
+            <strong>Status:</strong> <?php echo $consumerData ? 'Authenticated' : 'Waiting for user interaction...'; ?>
         </div>
 
-        <div style="text-align: center; margin: 20px 0;">
-            <button id="check-auth" class="btn">Check Authentication</button>
-            <button id="get-consumer-data" class="btn">Get Consumer Data</button>
-            <button id="logout" class="btn">Logout</button>
-        </div>
-
-        <div id="consumer-data" class="debug" style="display: none;">
-            <h4>Consumer Data:</h4>
-            <pre id="consumer-data-content"></pre>
-        </div>
-
-        <div class="debug">
-            <h4>Debug Information:</h4>
-            <div id="debug-info">
-                <p><strong>Switch element loaded:</strong> <span id="switch-loaded">Checking...</span></p>
-                <p><strong>Current URL:</strong><br><span id="current-url" style="display: block; margin-top: 5px;"><?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?></span></p>
-                <p><strong>URL Fragment:</strong><br><span id="url-fragment" style="display: block; margin-top: 5px;">No fragment</span></p>
-                <p><strong>Tokens stored:</strong> <span id="tokens-stored">No</span></p>
+            <?php if ($consumerData): ?>
+            <div class="debug">
+                <h4>Consumer Data (from handleCallback):</h4>
+                <pre><?php echo htmlspecialchars(json_encode([
+                    'firstName' => $consumerData->firstName ?? '',
+                    'lastName' => $consumerData->lastName ?? '',
+                    'primaryEmailAddress' => $consumerData->primaryEmailAddress ?? '',
+                    'membershipStatus' => $consumerData->membershipStatus ?? '',
+                    'membershipSince' => $consumerData->membershipSince ?? ''
+                ], JSON_PRETTY_PRINT)); ?></pre>
             </div>
-        </div>
+            <?php endif; ?>
+
+
+
+            <div class="debug">
+                <h4>Debug Information:</h4>
+                <div id="debug-info">
+                    <p><strong>Switch element loaded:</strong> <span id="switch-loaded">Checking...</span></p>
+                    <p><strong>Current URL:</strong><br><span id="current-url" style="display: block; margin-top: 5px;"><?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?></span></p>
+                    <p><strong>URL Fragment:</strong><br><span id="url-fragment" style="display: block; margin-top: 5px;">No fragment</span></p>
+                    <p><strong>Tokens stored:</strong> <span id="tokens-stored"><?php echo $consumerData ? 'Yes' : 'No'; ?></span></p>
+                    <p><strong>Session tokens count:</strong> <?php echo count($sessionData); ?></p>
+                    <p><strong>Cookie set:</strong> <?php echo $cookieSet ? 'Yes' : 'No'; ?></p>
+                    <p><strong>Session keys:</strong> <?php echo implode(', ', array_keys($sessionData)); ?></p>
+                </div>
+            </div>
     </div>
 
     <!-- TRSTD Switch Script -->
@@ -152,10 +194,15 @@ $config = require_once 'config.php';
         document.addEventListener('DOMContentLoaded', function() {
             const switchElement = document.querySelector('trstd-switch');
             const switchLoaded = document.getElementById('switch-loaded');
-            
+
             if (switchElement) {
                 switchLoaded.textContent = 'Yes';
                 switchLoaded.style.color = 'green';
+                
+                // Configure the widget to use authorization code flow (query parameters)
+                // instead of implicit flow (URL fragments)
+                switchElement.redirectUrl = window.location.origin + window.location.pathname;
+                console.log('TRSTD Switch configured with redirectUrl:', switchElement.redirectUrl);
             } else {
                 switchLoaded.textContent = 'No';
                 switchLoaded.style.color = 'red';
@@ -172,12 +219,13 @@ $config = require_once 'config.php';
                 urlFragment.textContent = 'No fragment';
             }
 
-            // Check for OAuth tokens in URL fragment on page load
-            extractTokensFromUrl();
+            // OAuth callback is handled by PHP handleCallback() method on every page load
+            // But we also need to handle URL fragment tokens from TRSTD Switch widget
+            extractAndStoreTokens();
         });
 
         // Extract tokens from URL fragment and store them
-        function extractTokensFromUrl() {
+        function extractAndStoreTokens() {
             const hash = window.location.hash.substring(1);
             if (!hash) return;
 
@@ -191,45 +239,27 @@ $config = require_once 'config.php';
                 session_state: params.get('session_state')
             };
 
-            // Only proceed if we have an access token
+            // Only proceed if we have tokens
             if (tokens.access_token && tokens.id_token) {
                 console.log('OAuth tokens found in URL fragment:', tokens);
                 
-                // Extract user ID from ID token
-                try {
-                    const payload = JSON.parse(atob(tokens.id_token.split('.')[1]));
-                    tokens.user_id = payload.sub;
-                    
-                    // Store tokens in backend
-                    storeTokens(tokens);
-                    
-                    // Clear the URL fragment to clean up the URL
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    
-                } catch (e) {
-                    console.error('Failed to decode ID token:', e);
-                    updateStatus('error', 'Failed to decode ID token: ' + e.message);
-                }
+                // Store tokens via AJAX
+                storeTokensViaAjax(tokens);
+                
+                // Clear the URL fragment to clean up the URL
+                window.history.replaceState({}, document.title, window.location.pathname);
             }
         }
 
-        // Store tokens in backend
-        function storeTokens(tokenData) {
-            console.log('Storing tokens:', tokenData);
-            
-            if (!tokenData.user_id) {
-                console.error('No user ID available for token storage');
-                updateStatus('error', 'No user ID available for token storage');
-                return;
-            }
-            
-            fetch('store-tokens.php', {
+        // Store tokens via AJAX
+        function storeTokensViaAjax(tokenData) {
+            fetch('oauth-ajax-handler.php?action=store_tokens', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    user_id: tokenData.user_id,
+                    user_id: extractUserIdFromToken(tokenData.id_token),
                     access_token: tokenData.access_token,
                     id_token: tokenData.id_token,
                     refresh_token: tokenData.refresh_token || null,
@@ -256,6 +286,18 @@ $config = require_once 'config.php';
             });
         }
 
+        // Extract user ID from ID token
+        function extractUserIdFromToken(idToken) {
+            try {
+                const payload = JSON.parse(atob(idToken.split('.')[1]));
+                return payload.sub;
+            } catch (e) {
+                console.error('Failed to decode ID token:', e);
+                return 'user';
+            }
+        }
+
+
         // Listen for TRSTD Switch events
         document.addEventListener('trstd-switch-authenticated', function(event) {
             console.log('TRSTD Switch: User authenticated', event.detail);
@@ -275,96 +317,6 @@ $config = require_once 'config.php';
             statusDiv.innerHTML = `<strong>Status:</strong> ${message}`;
         }
 
-        // Check authentication status
-        function checkAuthStatus() {
-            fetch('oauth-ajax-handler.php?action=auth_status')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.authenticated) {
-                        updateStatus('success', '✅ User is authenticated');
-                    } else {
-                        updateStatus('info', '❌ User is not authenticated');
-                    }
-                })
-                .catch(error => {
-                    updateStatus('error', 'Error checking auth status: ' + error.message);
-                });
-        }
-
-        // Get consumer data
-        function getConsumerData() {
-            const button = document.getElementById('get-consumer-data');
-            button.disabled = true;
-            button.textContent = 'Getting...';
-            
-            fetch('oauth-ajax-handler.php?action=get_consumer_data')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.data) {
-                        updateStatus('success', '✅ Consumer data retrieved successfully!');
-                        document.getElementById('consumer-data').style.display = 'block';
-                        document.getElementById('consumer-data-content').textContent = JSON.stringify(data.data, null, 2);
-                    } else {
-                        updateStatus('error', 'Failed to get consumer data: ' + (data.message || 'Unknown error'));
-                    }
-                })
-                .catch(error => {
-                    updateStatus('error', 'Error getting consumer data: ' + error.message);
-                })
-                .finally(() => {
-                    button.disabled = false;
-                    button.textContent = 'Get Consumer Data';
-                });
-        }
-
-        // Logout
-        function logout() {
-            fetch('oauth-ajax-handler.php?action=logout')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        updateStatus('info', '✅ Logged out successfully');
-                        document.getElementById('tokens-stored').textContent = 'No';
-                        document.getElementById('tokens-stored').style.color = 'red';
-                        document.getElementById('consumer-data').style.display = 'none';
-                        
-                        // Clear URL fragment to remove OAuth tokens from browser history
-                        if (window.location.hash) {
-                            // Use replaceState to avoid adding to browser history
-                            window.history.replaceState(null, null, window.location.pathname + window.location.search);
-                        }
-                        
-                        // Force TRSTD Switch to reset by recreating it
-                        const switchElement = document.querySelector('trstd-switch');
-                        if (switchElement) {
-                            const parent = switchElement.parentNode;
-                            const nextSibling = switchElement.nextSibling;
-                            const tsId = switchElement.getAttribute('tsId');
-                            
-                            // Remove the current switch
-                            switchElement.remove();
-                            
-                            // Create a new switch element (this will reset its internal state)
-                            const newSwitch = document.createElement('trstd-switch');
-                            newSwitch.setAttribute('tsId', tsId);
-                            parent.insertBefore(newSwitch, nextSibling);
-                            
-                            // Update debug info
-                            document.getElementById('url-fragment').textContent = 'No fragment';
-                        }
-                    } else {
-                        updateStatus('error', 'Failed to logout: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    updateStatus('error', 'Error logging out: ' + error.message);
-                });
-        }
-
-        // Event listeners
-        document.getElementById('check-auth').addEventListener('click', checkAuthStatus);
-        document.getElementById('get-consumer-data').addEventListener('click', getConsumerData);
-        document.getElementById('logout').addEventListener('click', logout);
     </script>
 </body>
 </html>

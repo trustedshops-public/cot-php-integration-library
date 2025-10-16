@@ -9,14 +9,10 @@ ini_set('log_errors', 1);
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/SessionTokenStorage.php';
 
-use TRSTD\COT\Client;
 use TRSTD\COT\Token;
 
-// Load configuration
-$config = require_once 'config.php';
-
 // Handle AJAX requests
-if (isset($_GET['action'])) {
+if (isset($_GET['action']) && $_GET['action'] === 'store_tokens') {
     // Set JSON header first
     header('Content-Type: application/json');
     
@@ -33,167 +29,58 @@ if (isset($_GET['action'])) {
             session_start();
         }
     
-    $sessionTokenStorage = new SessionTokenStorage();
-    
-    // Create Client instance using configuration
-    $client = new Client(
-        $config['ts_id'],
-        $config['client_id'],
-        $config['client_secret'],
-        $sessionTokenStorage,
-        $config['environment']
-    );
-    
-        switch ($_GET['action']) {
-            case 'auth_status':
-                $isAuthenticated = $sessionTokenStorage->isAuthenticated();
-                echo json_encode([
-                    'success' => true,
-                    'authenticated' => $isAuthenticated
-                ]);
-                break;
-            
-        case 'get_consumer_data':
-            try {
-                // First try to get tokens from session
-                $idToken = null;
-                $accessToken = null;
-                
-                if ($sessionTokenStorage->isAuthenticated()) {
-                    // Get the first available user's tokens from session
-                    foreach ($_SESSION['trstd_tokens'] as $userId => $tokenData) {
-                        if (isset($tokenData['id_token']) && !empty($tokenData['id_token'])) {
-                            $idToken = $tokenData['id_token'];
-                            $accessToken = $tokenData['access_token'] ?? null;
-                            break;
-                        }
-                    }
-                }
-                
-                // If no tokens in session, try to get from URL fragment
-                if (!$idToken) {
-                    $referer = $_SERVER['HTTP_REFERER'] ?? '';
-                    if (strpos($referer, 'id_token=') !== false) {
-                        $urlParts = parse_url($referer);
-                        if (isset($urlParts['fragment'])) {
-                            parse_str($urlParts['fragment'], $fragment);
-                            if (isset($fragment['id_token'])) {
-                                $idToken = $fragment['id_token'];
-                            }
-                            if (isset($fragment['access_token'])) {
-                                $accessToken = $fragment['access_token'];
-                            }
-                        }
-                    }
-                }
-                
-                if (!$idToken) {
-                    echo json_encode([
-                        'success' => false,
-                        'message' => 'No ID token available'
-                    ]);
-                    break;
-                }
-                
-                // Set the ID token cookie so Client::getIdentityCookie() can find it
-                // Use the older setcookie format for better compatibility
-                setcookie('TRSTD_ID_TOKEN', $idToken, time() + 3600, '/', '', false, false);
-                
-                // Also set it in $_COOKIE for immediate access
-                $_COOKIE['TRSTD_ID_TOKEN'] = $idToken;
-                
-                // Store tokens in AuthStorage so Client can find them
-                if ($accessToken) {
-                    // Create a Token object and store it in SessionTokenStorage
-                    $token = new Token($idToken, null, $accessToken); // idToken, refreshToken, accessToken
-                    
-                    // Decode ID token to get user ID (sub claim)
-                    $decodedToken = json_decode(base64_decode(str_replace(['-', '_'], ['+', '/'], explode('.', $idToken)[1])), true);
-                    $userId = $decodedToken['sub'] ?? 'user';
-                    
-                    // Store in session storage using the user ID from the ID token
-                    $sessionTokenStorage->set($userId, $token);
-                }
-                
-                // Debug: Check what's in session storage
-                $sessionData = $_SESSION['trstd_tokens'] ?? [];
-                $cookieSet = isset($_COOKIE['TRSTD_ID_TOKEN']);
-                
-                // Now use the original Client class method
-                // Client will get ID token from cookie, then find matching token in storage
-                $consumerData = $client->getConsumerData();
-                
-                if ($consumerData) {
-                    echo json_encode([
-                        'success' => true,
-                        'data' => [
-                            'firstName' => $consumerData->firstName ?? '',
-                            'lastName' => $consumerData->lastName ?? '',
-                            'primaryEmailAddress' => $consumerData->primaryEmailAddress ?? '',
-                            'membershipStatus' => $consumerData->membershipStatus ?? '',
-                            'membershipSince' => $consumerData->membershipSince ?? ''
-                        ]
-                    ]);
-                } else {
-                    echo json_encode([
-                        'success' => false,
-                        'message' => 'No consumer data available',
-                        'debug' => [
-                            'session_tokens_count' => count($sessionData),
-                            'cookie_set' => $cookieSet,
-                            'id_token_provided' => !empty($idToken),
-                            'access_token_provided' => !empty($accessToken),
-                            'session_keys' => array_keys($sessionData)
-                        ]
-                    ]);
-                }
-            } catch (Exception $e) {
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Error: ' . $e->getMessage()
-                ]);
-            }
-            break;
-            
-        case 'logout':
-            $sessionTokenStorage->clearAll();
-            
-            // Also clear the ID token cookie
-            setcookie('TRSTD_ID_TOKEN', '', [
-                'expires' => time() - 3600, // Expire in the past
-                'path' => '/',
-                'secure' => false,
-                'httponly' => false,
-                'samesite' => 'Lax'
-            ]);
-            
-            echo json_encode(['success' => true, 'message' => 'Logged out successfully']);
-            break;
-            
-        case 'debug_tokens':
+        $sessionTokenStorage = new SessionTokenStorage();
+        
+        // Handle token storage from JavaScript (URL fragments)
+        $input = json_decode(file_get_contents('php://input'), true);
+        
+        if (!$input || !isset($input['id_token']) || !isset($input['access_token'])) {
             echo json_encode([
-                'success' => true,
-                'session_data' => $_SESSION,
-                'is_authenticated' => $sessionTokenStorage->isAuthenticated(),
-                'session_id' => session_id()
+                'success' => false,
+                'error' => 'Missing required token data'
             ]);
-            break;
-            
-            default:
-                echo json_encode(['success' => false, 'message' => 'Unknown action']);
+            exit;
         }
         
+        // Create token object
+        $token = new Token(
+            $input['id_token'],
+            $input['refresh_token'] ?? '',
+            $input['access_token']
+        );
+        
+        // Store in session storage using the user ID
+        $userId = $input['user_id'] ?? 'user';
+        $sessionTokenStorage->set($userId, $token);
+        
+        // Set the ID token cookie (this is what getConsumerData() needs)
+        setcookie('TRSTD_ID_TOKEN', $input['id_token'], [
+            'expires' => time() + 3600,
+            'path' => '/',
+            'secure' => false,
+            'httponly' => false,
+            'samesite' => 'Lax'
+        ]);
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Tokens stored successfully'
+        ]);
+        
     } catch (Exception $e) {
-        // Clear any output that might have been generated
+        // Clean any output that might have been generated
         ob_clean();
+        
         echo json_encode([
             'success' => false,
-            'message' => 'Server error: ' . $e->getMessage()
+            'error' => 'Server error: ' . $e->getMessage()
         ]);
+    } finally {
+        // End output buffering
+        ob_end_flush();
     }
-    
-    // Clean and send output
-    ob_end_flush();
-    exit;
+} else {
+    // No action specified or invalid action
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'error' => 'Invalid or missing action']);
 }
-?>
