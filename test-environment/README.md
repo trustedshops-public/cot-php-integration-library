@@ -39,7 +39,6 @@ make restart
 
 ### **Test URL:**
 - **Test Page (HTTPS)**: https://localhost:8443/oauth-integration-test.php
-- **HTTP (dev only)**: http://localhost:8081/oauth-integration-test.php
 
 ## 🐛 Debugging:
 
