@@ -21,6 +21,8 @@ $client = new Client(
     $config['environment']
 );
 
+// Handle OAuth callback and initialize PKCE parameters
+$client->handleCallback();
 
 $consumerData = $client->getConsumerData();
 
@@ -178,7 +180,7 @@ $cookieSet = isset($_COOKIE['TRSTD_ID_TOKEN']);
     </div>
 
     <!-- TRSTD Switch Script -->
-    <script type="module" src="http://cdn.trstd-login-test.trstd.com/switch/switch.js"></script>
+    <script type="module" src="https://cdn.trstd-login-test.trstd.com/switch/switch.js"></script>
     
     <script>
         // Check if switch element is loaded

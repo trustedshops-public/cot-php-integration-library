@@ -102,14 +102,6 @@ The project includes a comprehensive Makefile with the following commands:
 - `make docker-stop` - Stop Docker environment
 - `make docker-logs` - View Docker logs
 
-#### 🔧 Development
-- `make logs` - View container logs
-- `make status` - Show container status
-- `make open` - Open test page in browser
-
-#### 📚 Documentation
-- `make docs` - Open documentation
-
 ### Testing
 
 The project includes a test environment for development and testing:
@@ -120,12 +112,24 @@ The project includes a test environment for development and testing:
    ```
 
 2. **Access the test page:**
-   Open `http://localhost:8081/oauth-integration-test.php` in your browser
+   Open `https://localhost:8443/oauth-integration-test.php` in your browser
 
-3. **Run automated tests:**
-   ```bash
-   make test
    ```
+
+### Debugging
+
+For debugging with Xdebug:
+
+1. **Start Xdebug in your IDE first** (Cursor, VS Code, PhpStorm)
+2. **Run development environment:**
+   ```bash
+   make dev
+   ```
+3. **Set breakpoints** in your PHP code
+4. **Visit test page**: https://localhost:8443/oauth-integration-test.php
+5. **Code will pause** at breakpoints for inspection
+
+**Important:** Always start Xdebug in IDE before running `make dev`. The environment will attach to your IDE's debugger on `host.docker.internal:9003`.
 
 
 ## Contributing

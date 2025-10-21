@@ -20,6 +20,20 @@ services:
     networks:
       - cot-test-network
 
+  apache-proxy:
+    image: httpd:2.4
+    container_name: cot-apache-proxy
+    depends_on:
+      - test-environment
+    ports:
+      - "8443:443"
+    volumes:
+      - ./apache-cot-ssl.conf:/usr/local/apache2/conf/extra/cot-ssl.conf:ro
+      - ./certs:/usr/local/apache2/conf/certs:ro
+    command: ["httpd-foreground", "-C", "Include conf/extra/cot-ssl.conf"]
+    networks:
+      - cot-test-network
+
 networks:
   cot-test-network:
     driver: bridge

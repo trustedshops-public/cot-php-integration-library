@@ -33,9 +33,9 @@ docker-compose up -d
 
 echo ""
 echo "✅ Test environment is running with $DOCKER_PROVIDER!"
-echo "🌐 Access at: http://localhost:8081"
-echo "🔗 Test page: http://localhost:8081/oauth-integration-test.php"
-echo "🧪 Integration test: http://localhost:8081/oauth-integration-test.php"
+echo "🌐 Access at: http://localhost:8081 (HTTP) / https://localhost:8443 (HTTPS)"
+echo "🔗 Test page: https://localhost:8443/oauth-integration-test.php"
+echo "🧪 Integration test: https://localhost:8443/oauth-integration-test.php"
 echo ""
 echo "📁 File watching is active - changes to src/ and vendor/ will be synced automatically"
 echo "🛑 To stop: ./docker-stop.sh"

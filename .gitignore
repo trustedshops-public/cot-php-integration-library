@@ -9,3 +9,7 @@ phpunit.xml
 .cursor
 
 test-environment/config.php
+
+# Generated certificates
+test-environment/certs/*.pem
+test-environment/certs/*.key

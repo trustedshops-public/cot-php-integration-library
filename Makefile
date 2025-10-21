@@ -1,6 +1,6 @@
 # COT PHP Integration Library - Development Makefile
 
-.PHONY: help dev start stop clean test logs status build restart docker docker-stop docker-logs open quick debug debug-stop
+.PHONY: help dev start stop clean test logs status build restart docker docker-stop docker-logs open quick debug-logs
 
 # Default target
 help:
@@ -17,9 +17,8 @@ help:
 	@echo "  make docker-stop  - Stop Docker environment"
 	@echo ""
 	@echo "🐛 Debugging:"
-	@echo "  make debug        - Start Docker with Xdebug enabled"
-	@echo "  make debug-stop    - Stop debug environment"
-	@echo "  make debug-logs    - Check Xdebug logs"
+	@echo "  make dev          - Start Docker with Xdebug enabled"
+	@echo "  make debug-logs   - Check Xdebug logs"
 	@echo ""
 	@echo "🔧 Development:"
 	@echo "  make logs         - View container logs"
@@ -30,6 +29,9 @@ help:
 	@echo ""
 	@echo "📚 Documentation:"
 	@echo "  make docs         - Open documentation"
+	@echo ""
+	@echo "🔐 Certificates:"
+	@echo "  make certs        - Generate self-signed localhost TLS certs for HTTPS (8443)"
 	@echo ""
 
 # Local Development Commands
@@ -59,17 +61,6 @@ docker-stop:
 	@cd test-environment && ./docker-stop.sh
 
 # Debug Commands
-debug:
-	@echo "🐛 Starting Docker environment with Xdebug enabled..."
-	@cd test-environment && ./docker-dev.sh
-	@echo "🔗 Debug environment ready!"
-	@echo "📝 Set breakpoints in Cursor IDE and start debugging session (F5)"
-	@echo "🌐 Test page: http://localhost:8081/oauth-integration-test.php"
-
-debug-stop:
-	@echo "🛑 Stopping debug environment..."
-	@cd test-environment && ./docker-stop.sh
-
 debug-logs:
 	@echo "📋 Checking Xdebug logs..."
 	@cd test-environment && docker-compose exec test-environment cat /tmp/xdebug.log 2>/dev/null || echo "No Xdebug log found"
@@ -89,7 +80,8 @@ build:
 
 test:
 	@echo "🧪 Testing environment..."
-	@curl -s http://localhost:8081/oauth-integration-test.php > /dev/null && echo "✅ Test page accessible" || echo "❌ Test page not accessible"
+	@curl -s -k https://localhost:8443/oauth-integration-test.php > /dev/null && echo "✅ HTTPS test page accessible" || echo "❌ HTTPS test page not accessible"
+	@curl -s http://localhost:8081/oauth-integration-test.php > /dev/null && echo "✅ HTTP test page accessible" || echo "❌ HTTP test page not accessible"
 
 # Local Development Commands
 
@@ -102,9 +94,9 @@ clean:
 # Open browser
 open:
 	@echo "🌐 Opening test page..."
-	@open http://localhost:8081/oauth-integration-test.php 2>/dev/null || \
-		xdg-open http://localhost:8081/oauth-integration-test.php 2>/dev/null || \
-		echo "📖 Please open http://localhost:8081/oauth-integration-test.php manually"
+	@open https://localhost:8443/oauth-integration-test.php 2>/dev/null || \
+		xdg-open https://localhost:8443/oauth-integration-test.php 2>/dev/null || \
+		echo "📖 Please open https://localhost:8443/oauth-integration-test.php manually"
 
 # Documentation
 docs:
@@ -117,6 +109,14 @@ docs:
 quick: clean dev
 	@echo "🎯 Quick development environment ready!"
 
+
+# Generate self-signed localhost TLS certificates for Apache proxy
+certs:
+	@echo "🔐 Generating self-signed TLS certificates for https://localhost:8443 ..."
+	@mkdir -p test-environment/certs
+	@openssl req -x509 -newkey rsa:2048 -keyout test-environment/certs/localhost-key.pem -out test-environment/certs/localhost.pem -days 365 -nodes -subj "/CN=localhost"
+	@echo "✅ Certificates created: test-environment/certs/localhost.pem and localhost-key.pem"
+	@echo "ℹ️  If your browser complains, import and trust the cert (or use mkcert)."
 
 # Install dependencies
 install:

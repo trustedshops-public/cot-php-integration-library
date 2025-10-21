@@ -17,7 +17,7 @@ class SessionTokenStorage implements AuthStorageInterface
 
     public function __construct(string $sessionKey = 'trstd_tokens')
     {
-        if (session_status() === PHP_SESSION_NONE) {
+        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
             session_start();
         }
         $this->sessionKey = $sessionKey;

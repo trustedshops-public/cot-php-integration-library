@@ -38,23 +38,24 @@ make restart
 ## 🧪 Testing:
 
 ### **Test URL:**
-- **Test Page**: http://localhost:8081/oauth-integration-test.php
+- **Test Page (HTTPS)**: https://localhost:8443/oauth-integration-test.php
+- **HTTP (dev only)**: http://localhost:8081/oauth-integration-test.php
 
 ## 🐛 Debugging:
 
-### **Start Debug Environment:**
-```bash
-make debug
-```
-
 ### **Debug Workflow:**
-1. Start debug environment: `make debug`
-2. Set breakpoints in your PHP code
-3. Start debugging session in IDE
-4. Visit test page: http://localhost:8081/oauth-integration-test.php
-5. Code will pause at breakpoints for inspection
+1. **Start Xdebug in your IDE first** (e.g., Cursor, VS Code, PhpStorm)
+2. **Run development environment**: `make dev`
+3. **Set breakpoints** in your PHP code
+4. **Visit test page**: https://localhost:8443/oauth-integration-test.php
+5. **Code will pause** at breakpoints for inspection
 
-### **Stop Debug Environment:**
+### **Important Notes:**
+- **Always start Xdebug in IDE before running `make dev`**
+- The environment will attach to your IDE's debugger
+- Xdebug is configured to connect to `host.docker.internal:9003`
+
+### **Stop Development Environment:**
 ```bash
-make debug-stop
+make docker-stop
 ```
