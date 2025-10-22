@@ -58,7 +58,7 @@ On the frontend side, place the following code in your HTML file where you want 
 
 ```html
 <trstd-switch tsId="X1234567890123456789012345678901"></trstd-switch>
-<script type="module" src="https://widgets.trustedshops.com/switch/switch.js"></script>
+<script type="module" src="https://cdn.trstd-login-test.trstd.com/switch/switch.js"></script>
 ```
 
 For more detailed examples, please refer to the [`examples/`](./examples/) directory.
@@ -78,28 +78,46 @@ For more detailed examples, please refer to the [`examples/`](./examples/) direc
    composer install
    ```
 
-2. **Start development environment:**
+2. **Generate certificates (for HTTPS testing):**
    ```bash
-   # Option 1: Local PHP server
-   make start
-   
-   # Option 2: Docker environment
+   make certs
+   ```
+
+3. **Start development environment:**
+   ```bash
    make dev
+   ```
+
+### Configuration
+
+1. **Create configuration file:**
+   ```bash
+   cp test-environment/config.example.php test-environment/config.php
+   ```
+
+2. **Update configuration with your credentials:**
+   ```php
+   <?php
+   return [
+       'ts_id' => 'YOUR_ACTUAL_TS_ID',                    
+       'client_id' => 'trstd-switch-YOUR_ACTUAL_TS_ID',  
+       'client_secret' => 'YOUR_ACTUAL_CLIENT_SECRET',   
+       'environment' => 'qa'                               
+   ];
+   ?>
    ```
 
 ### Development Commands
 
 The project includes a comprehensive Makefile with the following commands:
 
-#### 🚀 Quick Start
-- `make start` - Start local PHP server
-- `make stop` - Stop local PHP server
-- `make restart` - Restart local server
-
 #### 🐳 Docker Environment
 - `make dev` - Start Docker with live file watching
 - `make docker-stop` - Stop Docker environment
-- `make docker-logs` - View Docker logs
+
+#### 🔐 Certificates
+- `make certs` - Generate self-signed localhost TLS certs for HTTPS (8443)
+
 
 ### Testing
 
@@ -107,12 +125,16 @@ The project includes a test environment for development and testing:
 
 1. **Start the test environment:**
    ```bash
-   make start
+   make dev
    ```
 
 2. **Access the test page:**
-   Open `https://localhost:8443/oauth-integration-test.php` in your browser
+   - **HTTPS (recommended)**: https://localhost:8443/oauth-integration-test.php
+   - **HTTP (dev only)**: http://localhost:8081/oauth-integration-test.php
 
+3. **Run automated tests:**
+   ```bash
+   make test
    ```
 
 ### Debugging
@@ -129,7 +151,6 @@ For debugging with Xdebug:
 5. **Code will pause** at breakpoints for inspection
 
 **Important:** Always start Xdebug in IDE before running `make dev`. The environment will attach to your IDE's debugger on `host.docker.internal:9003`.
-
 
 ## Contributing
 
