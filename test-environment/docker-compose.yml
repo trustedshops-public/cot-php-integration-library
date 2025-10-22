@@ -8,11 +8,11 @@ services:
       - "8081:8081"
       - "9003:9003"  # Xdebug port
     volumes:
-      # Mount source code for live sync (direct from original directories)
-      - ../src:/var/www/html/src:ro
-      - ../vendor:/var/www/html/vendor:ro
       # Mount test environment for development
       - .:/var/www/html/test-environment
+      # Mount source code directly
+      - ../src:/var/www/html/src:ro
+      - ../vendor:/var/www/html/vendor:ro
     environment:
       - PHP_ENV=development
       - XDEBUG_MODE=debug
