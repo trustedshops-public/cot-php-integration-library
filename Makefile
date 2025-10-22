@@ -1,6 +1,6 @@
 # COT PHP Integration Library - Development Makefile
 
-.PHONY: help dev start stop clean test logs status build restart docker docker-stop docker-logs open quick debug-logs
+.PHONY: help dev start stop clean test logs status build restart docker-stop docker-logs open quick debug-logs
 
 # Default target
 help:
@@ -13,7 +13,6 @@ help:
 	@echo ""
 	@echo "🐳 Docker Environment:"
 	@echo "  make dev          - Start Docker with live file watching"
-	@echo "  make docker       - Start Docker environment (simple)"
 	@echo "  make docker-stop  - Stop Docker environment"
 	@echo ""
 	@echo "🐛 Debugging:"
@@ -52,9 +51,6 @@ dev:
 	@echo "🚀 Starting Docker environment with live development..."
 	@cd test-environment && ./docker-dev.sh
 
-docker:
-	@echo "🚀 Starting Docker environment..."
-	@cd test-environment && ./docker-start.sh
 
 docker-stop:
 	@echo "🛑 Stopping Docker environment..."

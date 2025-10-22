@@ -98,7 +98,6 @@ The project includes a comprehensive Makefile with the following commands:
 
 #### 🐳 Docker Environment
 - `make dev` - Start Docker with live file watching
-- `make docker` - Start Docker environment (simple)
 - `make docker-stop` - Stop Docker environment
 - `make docker-logs` - View Docker logs
 
