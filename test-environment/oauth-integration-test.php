@@ -210,84 +210,8 @@ $cookieSet = isset($_COOKIE['TRSTD_ID_TOKEN']);
                 urlFragment.textContent = 'No fragment';
             }
 
-            extractAndStoreTokens();
         });
 
-        // Extract tokens from URL fragment and store them
-        function extractAndStoreTokens() {
-            const hash = window.location.hash.substring(1);
-            if (!hash) return;
-
-            const params = new URLSearchParams(hash);
-            const tokens = {
-                access_token: params.get('access_token'),
-                id_token: params.get('id_token'),
-                refresh_token: params.get('refresh_token'),
-                code: params.get('code'),
-                state: params.get('state'),
-                session_state: params.get('session_state')
-            };
-
-            // Only proceed if we have tokens
-            if (tokens.access_token && tokens.id_token) {
-                console.log('OAuth tokens found in URL fragment:', tokens);
-                
-                // Store tokens via AJAX
-                storeTokensViaAjax(tokens);
-                
-                // Clear the URL fragment to clean up the URL
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-        }
-
-        // Store tokens via AJAX
-        function storeTokensViaAjax(tokenData) {
-            fetch('oauth-ajax-handler.php?action=store_tokens', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    user_id: extractUserIdFromToken(tokenData.id_token),
-                    access_token: tokenData.access_token,
-                    id_token: tokenData.id_token,
-                    refresh_token: tokenData.refresh_token || null,
-                    code: tokenData.code,
-                    state: tokenData.state,
-                    session_state: tokenData.session_state
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    console.log('Tokens stored successfully:', data);
-                    updateStatus('success', '🎉 OAuth tokens stored successfully! Redirecting...');
-                    document.getElementById('tokens-stored').textContent = 'Yes';
-                    document.getElementById('tokens-stored').style.color = 'green';
-                    
-                    // Redirect to same page to trigger server-side getConsumerData()
-                    window.location.reload();
-                } else {
-                    console.error('Failed to store tokens:', data.error);
-                    updateStatus('error', 'Failed to store tokens: ' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error storing tokens:', error);
-                updateStatus('error', 'Error storing tokens: ' + error.message);
-            });
-        }
-
-        // Extract user ID from ID token
-        function extractUserIdFromToken(idToken) {
-            try {
-                const payload = JSON.parse(atob(idToken.split('.')[1]));
-                return payload.sub;
-            } catch (e) {
-                console.error('Failed to decode ID token:', e);
-                return 'user';
-            }
-        }
 
 
         // Listen for TRSTD Switch events
