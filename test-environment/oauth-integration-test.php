@@ -153,13 +153,7 @@ $cookieSet = isset($_COOKIE['TRSTD_ID_TOKEN']);
             <?php if ($consumerData): ?>
             <div class="debug">
                 <h4>Consumer Data (from handleCallback):</h4>
-                <pre><?php echo htmlspecialchars(json_encode([
-                    'firstName' => $consumerData->firstName ?? '',
-                    'lastName' => $consumerData->lastName ?? '',
-                    'primaryEmailAddress' => $consumerData->primaryEmailAddress ?? '',
-                    'membershipStatus' => $consumerData->membershipStatus ?? '',
-                    'membershipSince' => $consumerData->membershipSince ?? ''
-                ], JSON_PRETTY_PRINT)); ?></pre>
+                <pre><?php echo htmlspecialchars(json_encode($consumerData, JSON_PRETTY_PRINT)); ?></pre>
             </div>
             <?php endif; ?>
 
