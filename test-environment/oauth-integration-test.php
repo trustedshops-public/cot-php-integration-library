@@ -1,0 +1,239 @@
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/SessionTokenStorage.php';
+
+use TRSTD\COT\Client;
+
+// Load configuration
+$config = require_once 'config.php';
+
+// Start session
+session_start();
+
+// Initialize client
+$client = new Client(
+    $config['ts_id'],
+    $config['client_id'],
+    $config['client_secret'],
+    new SessionTokenStorage(),
+    $config['environment']
+);
+
+// Handle OAuth callback and initialize PKCE parameters
+$client->handleCallback();
+
+$consumerData = $client->getConsumerData();
+
+// Debug: Check what's in session storage
+$sessionData = $_SESSION['trstd_tokens'] ?? [];
+$cookieSet = isset($_COOKIE['TRSTD_ID_TOKEN']);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .switch-container {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+        }
+        .debug {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        .debug pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+            overflow-x: auto;
+            background: #fff;
+            padding: 10px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+        }
+        .debug p {
+            margin: 5px 0;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .debug span {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 OAuth Integration Test</h1>
+        
+        <div class="status info">
+            <strong>Environment:</strong> <?php echo strtoupper($config['environment']); ?><br>
+            <strong>TS ID:</strong> <?php echo $config['ts_id']; ?>
+        </div>
+
+            <div class="switch-container">
+                <h3>TRSTD Switch Element</h3>
+                <p>Click the switch below to authenticate and get OAuth tokens:</p>
+                <trstd-switch tsId="<?php echo $config['ts_id']; ?>" id="trstd-switch"></trstd-switch>
+            </div>
+
+        <div id="status" class="status info">
+            <strong>Status:</strong> <?php echo $consumerData ? 'Authenticated' : 'Waiting for user interaction...'; ?>
+        </div>
+
+            <?php if ($consumerData): ?>
+            <div class="debug">
+                <h4>Consumer Data (from handleCallback):</h4>
+                <pre><?php echo htmlspecialchars(json_encode([
+                    'firstName' => $consumerData->firstName ?? '',
+                    'lastName' => $consumerData->lastName ?? '',
+                    'primaryEmailAddress' => $consumerData->primaryEmailAddress ?? '',
+                    'membershipStatus' => $consumerData->membershipStatus ?? '',
+                    'membershipSince' => $consumerData->membershipSince ?? ''
+                ], JSON_PRETTY_PRINT)); ?></pre>
+            </div>
+            <?php endif; ?>
+
+
+
+            <div class="debug">
+                <h4>Debug Information:</h4>
+                <div id="debug-info">
+                    <p><strong>Switch element loaded:</strong> <span id="switch-loaded">Checking...</span></p>
+                    <p><strong>Current URL:</strong><br><span id="current-url" style="display: block; margin-top: 5px;"><?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?></span></p>
+                    <p><strong>URL Fragment:</strong><br><span id="url-fragment" style="display: block; margin-top: 5px;">No fragment</span></p>
+                    <p><strong>Tokens stored:</strong> <span id="tokens-stored"><?php echo $consumerData ? 'Yes' : 'No'; ?></span></p>
+                    <p><strong>Session tokens count:</strong> <?php echo count($sessionData); ?></p>
+                    <p><strong>Cookie set:</strong> <?php echo $cookieSet ? 'Yes' : 'No'; ?></p>
+                    <p><strong>Session keys:</strong> <?php echo implode(', ', array_keys($sessionData)); ?></p>
+                </div>
+            </div>
+    </div>
+
+    <!-- TRSTD Switch Script -->
+    <script type="module" src="https://cdn.trstd-login-test.trstd.com/switch/switch.js"></script>
+    
+    <script>
+        // Check if switch element is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const switchElement = document.querySelector('trstd-switch');
+            const switchLoaded = document.getElementById('switch-loaded');
+
+            if (switchElement) {
+                switchLoaded.textContent = 'Yes';
+                switchLoaded.style.color = 'green';
+                
+                switchElement.redirectUrl = window.location.origin + window.location.pathname;
+                console.log('TRSTD Switch configured with redirectUrl:', switchElement.redirectUrl);
+            } else {
+                switchLoaded.textContent = 'No';
+                switchLoaded.style.color = 'red';
+            }
+
+            // Update URL fragment display
+            const urlFragment = document.getElementById('url-fragment');
+            const hash = window.location.hash;
+            if (hash) {
+                // Format long URLs with line breaks for better readability
+                const formattedHash = hash.replace(/&/g, '&\n').replace(/=/g, '=\n');
+                urlFragment.innerHTML = '<pre style="white-space: pre-wrap; word-wrap: break-word; font-size: 10px; max-width: 100%; overflow-x: auto;">' + formattedHash + '</pre>';
+            } else {
+                urlFragment.textContent = 'No fragment';
+            }
+
+        });
+
+
+
+        // Listen for TRSTD Switch events
+        document.addEventListener('trstd-switch-authenticated', function(event) {
+            console.log('TRSTD Switch: User authenticated', event.detail);
+            updateStatus('success', '✅ User authenticated via TRSTD Switch!');
+        });
+
+        document.addEventListener('trstd-switch-logout', function(event) {
+            console.log('TRSTD Switch: User logged out', event.detail);
+            updateStatus('info', '❌ User logged out');
+            document.getElementById('tokens-stored').textContent = 'No';
+            document.getElementById('tokens-stored').style.color = 'red';
+        });
+
+        function updateStatus(type, message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = `<strong>Status:</strong> ${message}`;
+        }
+
+    </script>
+</body>
+</html>
+
