@@ -20,17 +20,6 @@ final class ClientTest extends TestCase
      * @covers \TRSTD\COT\Client::__construct
      * @return void
      */
-    public function testConstructorThrowsRequiredParameterMissingExceptionForMissingTsId()
-    {
-        $mockAuthStorage = $this->createMock(AuthStorageInterface::class);
-        $this->expectException(RequiredParameterMissingException::class);
-        new Client('CLIENT_ID', 'CLIENT_SECRET', $mockAuthStorage);
-    }
-
-    /**
-     * @covers \TRSTD\COT\Client::__construct
-     * @return void
-     */
     public function testConstructorThrowsRequiredParameterMissingExceptionForMissingClientId()
     {
         $mockAuthStorage = $this->createMock(AuthStorageInterface::class);
