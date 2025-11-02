@@ -14,7 +14,6 @@ session_start();
 
 // Initialize client
 $client = new Client(
-    $config['ts_id'],
     $config['client_id'],
     $config['client_secret'],
     new SessionTokenStorage(),

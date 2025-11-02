@@ -43,7 +43,7 @@ class trstdexampleintegration extends Module
         $clientSecret = Configuration::get(ClientConfigurationTextDataConfiguration::CONFIG_KEY_CLIENT_SECRET);
 
         // Initialize the COT Auth client
-        $this->cotAuthClient = new Client($tsId, $clientId, $clientSecret, new COTAuthDBStorage());
+        $this->cotAuthClient = new Client($clientId, $clientSecret, new COTAuthDBStorage());
     }
 
     public function install()

@@ -24,7 +24,7 @@ final class ClientTest extends TestCase
     {
         $mockAuthStorage = $this->createMock(AuthStorageInterface::class);
         $this->expectException(RequiredParameterMissingException::class);
-        new Client('', 'CLIENT_ID', 'CLIENT_SECRET', $mockAuthStorage);
+        new Client('CLIENT_ID', 'CLIENT_SECRET', $mockAuthStorage);
     }
 
     /**
@@ -35,7 +35,7 @@ final class ClientTest extends TestCase
     {
         $mockAuthStorage = $this->createMock(AuthStorageInterface::class);
         $this->expectException(RequiredParameterMissingException::class);
-        new Client('TSID', '', 'CLIENT_SECRET', $mockAuthStorage);
+        new Client('', 'CLIENT_SECRET', $mockAuthStorage);
     }
 
     /**
@@ -46,7 +46,7 @@ final class ClientTest extends TestCase
     {
         $mockAuthStorage = $this->createMock(AuthStorageInterface::class);
         $this->expectException(RequiredParameterMissingException::class);
-        new Client('TSID', 'CLIENT_ID', '', $mockAuthStorage);
+        new Client('CLIENT_ID', '', $mockAuthStorage);
     }
 
     /**
@@ -56,7 +56,7 @@ final class ClientTest extends TestCase
     public function testConstructorThrowsRequiredParameterMissingExceptionForMissingAuthStorage()
     {
         $this->expectException(RequiredParameterMissingException::class);
-        new Client('TSID', 'CLIENT_ID', 'CLIENT_SECRET', null);
+        new Client('CLIENT_ID', 'CLIENT_SECRET', null);
     }
 
     /**
@@ -88,7 +88,7 @@ final class ClientTest extends TestCase
         $mockedAuthStorage = $this->createMock(AuthStorageInterface::class);
         $mockedAuthStorage->expects($this->once())->method('set')->with("1234567890", new Token(self::TEST_ID_TOKEN, 'testRefreshToken', 'testAccessToken'));
 
-        $client = new Client('TSID', 'CLIENT_ID', 'CLIENT_SECRET', $mockedAuthStorage);
+        $client = new Client('CLIENT_ID', 'CLIENT_SECRET', $mockedAuthStorage);
         $client->setLogger($mockedLogger);
         $client->setHttpClient($mockedHttpClient);
         $client->setCacheItemPool($mockedCacheItemPool);
