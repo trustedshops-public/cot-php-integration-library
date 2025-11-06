@@ -73,8 +73,6 @@ workflows:
       - semantic-release/with_changelog_github_config:
           name: semantic-release
           requires:
-            - install
-            - analyse
             - test
           <<: *filter_main
           context:
