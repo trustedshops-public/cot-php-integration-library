@@ -1,3 +1,15 @@
+## [1.5.0](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.4.0...1.5.0) (2025-11-06)
+
+
+### Features
+
+* **SW-758:** Refactor `switch` references to `trstd login` across test, README, and scripts ([#19](https://github.com/trustedshops-public/cot-php-integration-library/issues/19)) ([e429978](https://github.com/trustedshops-public/cot-php-integration-library/commit/e42997891a4b4478fe002a3be0e5f05affac2a7e))
+
+
+### Bug Fixes
+
+* ensure semantic-release runs after all status checks complete ([a6bdc67](https://github.com/trustedshops-public/cot-php-integration-library/commit/a6bdc67ab4806489a73685a1c23c065707a921a5))
+
 ## [1.4.0](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.3.0...1.4.0) (2025-09-11)
 
 
