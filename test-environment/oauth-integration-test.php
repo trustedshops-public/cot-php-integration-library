@@ -54,7 +54,7 @@ $cookieSet = isset($_COOKIE['TRSTD_ID_TOKEN']);
             color: #333;
             text-align: center;
         }
-        .switch-container {
+        .trstd-login-container {
             text-align: center;
             margin: 30px 0;
             padding: 20px;
@@ -134,16 +134,16 @@ $cookieSet = isset($_COOKIE['TRSTD_ID_TOKEN']);
 <body>
     <div class="container">
         <h1>🔐 OAuth Integration Test</h1>
-        
+
         <div class="status info">
             <strong>Environment:</strong> <?php echo strtoupper($config['environment']); ?><br>
             <strong>TS ID:</strong> <?php echo $config['ts_id']; ?>
         </div>
 
-            <div class="switch-container">
-                <h3>TRSTD Switch Element</h3>
-                <p>Click the switch below to authenticate and get OAuth tokens:</p>
-                <trstd-switch tsId="<?php echo $config['ts_id']; ?>" id="trstd-switch"></trstd-switch>
+            <div class="trstd-login-container">
+                <h3>trstd login element</h3>
+                <p>Click the trstd login below to authenticate and get OAuth tokens:</p>
+                <trstd-login tsId="<?php echo $config['ts_id']; ?>" id="trstd-login"></trstd-login>
             </div>
 
         <div id="status" class="status info">
@@ -162,7 +162,7 @@ $cookieSet = isset($_COOKIE['TRSTD_ID_TOKEN']);
             <div class="debug">
                 <h4>Debug Information:</h4>
                 <div id="debug-info">
-                    <p><strong>Switch element loaded:</strong> <span id="switch-loaded">Checking...</span></p>
+                    <p><strong>trstd login element loaded:</strong> <span id="trstd-login-loaded">Checking...</span></p>
                     <p><strong>Current URL:</strong><br><span id="current-url" style="display: block; margin-top: 5px;"><?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?></span></p>
                     <p><strong>URL Fragment:</strong><br><span id="url-fragment" style="display: block; margin-top: 5px;">No fragment</span></p>
                     <p><strong>Tokens stored:</strong> <span id="tokens-stored"><?php echo $consumerData ? 'Yes' : 'No'; ?></span></p>
@@ -173,24 +173,24 @@ $cookieSet = isset($_COOKIE['TRSTD_ID_TOKEN']);
             </div>
     </div>
 
-    <!-- TRSTD Switch Script -->
-    <script type="module" src="https://cdn.trstd-login-test.trstd.com/switch/switch.js"></script>
-    
-    <script>
-        // Check if switch element is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            const switchElement = document.querySelector('trstd-switch');
-            const switchLoaded = document.getElementById('switch-loaded');
+    <!-- trstd login script -->
+    <script type="module" src="https://cdn.trstd-login-test.trstd.com/trstd-login/script.js"></script>
 
-            if (switchElement) {
-                switchLoaded.textContent = 'Yes';
-                switchLoaded.style.color = 'green';
-                
-                switchElement.redirectUrl = window.location.origin + window.location.pathname;
-                console.log('TRSTD Switch configured with redirectUrl:', switchElement.redirectUrl);
+    <script>
+        // Check if trstd login element is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const trstdLoginElement = document.querySelector('trstd-login');
+            const trstdLoginLoaded = document.getElementById('trstd-login-loaded');
+
+            if (trstdLoginElement) {
+                trstdLoginLoaded.textContent = 'Yes';
+                trstdLoginLoaded.style.color = 'green';
+
+                trstdLoginElement.redirectUrl = window.location.origin + window.location.pathname;
+                console.log('trstd login configured with redirectUrl:', trstdLoginElement.redirectUrl);
             } else {
-                switchLoaded.textContent = 'No';
-                switchLoaded.style.color = 'red';
+                trstdLoginLoaded.textContent = 'No';
+                trstdLoginLoaded.style.color = 'red';
             }
 
             // Update URL fragment display
@@ -206,19 +206,17 @@ $cookieSet = isset($_COOKIE['TRSTD_ID_TOKEN']);
 
         });
 
-
-
-        // Listen for TRSTD Switch events
-        document.addEventListener('trstd-switch-authenticated', function(event) {
-            console.log('TRSTD Switch: User authenticated', event.detail);
-            updateStatus('success', '✅ User authenticated via TRSTD Switch!');
-        });
-
-        document.addEventListener('trstd-switch-logout', function(event) {
-            console.log('TRSTD Switch: User logged out', event.detail);
-            updateStatus('info', '❌ User logged out');
-            document.getElementById('tokens-stored').textContent = 'No';
-            document.getElementById('tokens-stored').style.color = 'red';
+        // Listen for trstd login events
+        document.addEventListener('trstd-login.auth', function(event) {
+            if (event.detail === 'LOGGED_IN') {
+                console.log('trstd login: User authenticated', event.detail);
+                updateStatus('success', '✅ User authenticated via trstd login!');
+            } else {
+                console.log('trstd login: User logged out', event.detail);
+                updateStatus('info', '❌ User logged out');
+                document.getElementById('tokens-stored').textContent = 'No';
+                document.getElementById('tokens-stored').style.color = 'red';
+            }
         });
 
         function updateStatus(type, message) {

@@ -7,6 +7,7 @@ phpunit.xml
 .phpunit.result.cache
 .phpunit.cache
 .cursor
+.idea
 
 test-environment/config.php
 
