@@ -1,3 +1,10 @@
+## [1.6.0](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.5.0...1.6.0) (2025-11-10)
+
+
+### Features
+
+* remove tsId as param from Client class ([#17](https://github.com/trustedshops-public/cot-php-integration-library/issues/17)) ([ea830cc](https://github.com/trustedshops-public/cot-php-integration-library/commit/ea830ccb72bef3c84426cafc06fd44bf3410f3a0))
+
 ## [1.5.0](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.4.0...1.5.0) (2025-11-06)
 
 
