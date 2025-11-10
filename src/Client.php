@@ -57,11 +57,6 @@ final class Client
     /**
      * @var string
      */
-    private $tsId;
-
-    /**
-     * @var string
-     */
     private $clientId;
 
     /**
@@ -90,19 +85,14 @@ final class Client
     private $cacheItemPool;
 
     /**
-     * @param string $tsId TS ID
      * @param string $clientId client ID
      * @param string $clientSecret client secret
      * @param AuthStorageInterface|null $authStorage auth storage to store tokens
      * @param string $env environment dev, qa, or prod
      * @throws RequiredParameterMissingException if any required parameter is missing
      */
-    public function __construct($tsId, $clientId, $clientSecret, ?AuthStorageInterface $authStorage = null, $env = 'prod')
+    public function __construct($clientId, $clientSecret, ?AuthStorageInterface $authStorage = null, $env = 'prod')
     {
-        if (!$tsId) {
-            throw new RequiredParameterMissingException('TS ID is required.');
-        }
-
         if (!$clientId) {
             throw new RequiredParameterMissingException('Client ID is required.');
         }
@@ -118,7 +108,6 @@ final class Client
         $this->authServerBaseUri = $this->getAuthServerBaseUri($env);
         $this->resourceServerBaseUri = $this->getResourceServerBaseUri($env);
 
-        $this->tsId = $tsId;
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
         $this->authStorage = $authStorage;
@@ -162,7 +151,7 @@ final class Client
                 'Authorization: Bearer ' . $accessToken,
             ];
 
-            $response = $this->httpClient->request("GET", "consumer-data" . ($this->tsId ? "?shopId=" . $this->tsId : ""), ['headers' => $headers, 'base_uri' => $this->resourceServerBaseUri]);
+            $response = $this->httpClient->request("GET", "consumer-data", ['headers' => $headers, 'base_uri' => $this->resourceServerBaseUri]);
 
             return json_decode($response->getContent());
         } catch (Exception $ex) {
