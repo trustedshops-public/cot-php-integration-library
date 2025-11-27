@@ -1,3 +1,10 @@
+## [1.6.3](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.6.2...1.6.3) (2025-11-27)
+
+
+### Bug Fixes
+
+* remove string type hints from method parameters for PHP 7.4 compatibility ([224b83d](https://github.com/trustedshops-public/cot-php-integration-library/commit/224b83d3b162c2ae4ffdd0f721fa55200000a73c))
+
 ## [1.6.2](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.6.1...1.6.2) (2025-11-27)
 
 
