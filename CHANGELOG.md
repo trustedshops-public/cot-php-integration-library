@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.6.0...1.6.1) (2025-11-27)
+
+
+### Bug Fixes
+
+* downgrade psr/cache to ^1.0 || ^2.0 for PHP 7.4 compatibility ([191c5b1](https://github.com/trustedshops-public/cot-php-integration-library/commit/191c5b16f0ec5cf7c6560a72da1c2842b7b1225a))
+
 ## [1.6.0](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.5.0...1.6.0) (2025-11-10)
 
 
