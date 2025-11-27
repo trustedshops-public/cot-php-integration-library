@@ -12,7 +12,7 @@ use PrestaShop\PrestaShop\Core\ConfigurationInterface;
  */
 final class ClientConfigurationTextDataConfiguration implements DataConfigurationInterface
 {
-    public const CONFIG_KEY_TS_ID = 'COT_TS_ID';
+    public const CONFIG_KEY_CLIENT_ID = 'COT_CLIENT_ID';
     public const CONFIG_KEY_CLIENT_SECRET = 'COT_CLIENT_SECRET';
     public const CONFIG_MAXLENGTH = 64;
 
@@ -30,7 +30,7 @@ final class ClientConfigurationTextDataConfiguration implements DataConfiguratio
     {
         $return = [];
 
-        $return[static::CONFIG_KEY_TS_ID] = $this->configuration->get(static::CONFIG_KEY_TS_ID);
+        $return[static::CONFIG_KEY_CLIENT_ID] = $this->configuration->get(static::CONFIG_KEY_CLIENT_ID);
         $return[static::CONFIG_KEY_CLIENT_SECRET] = $this->configuration->get(static::CONFIG_KEY_CLIENT_SECRET);
         $return[static::CONFIG_KEY_DEMO_VIEW] = $this->configuration->get(static::CONFIG_KEY_DEMO_VIEW);
 
@@ -42,10 +42,10 @@ final class ClientConfigurationTextDataConfiguration implements DataConfiguratio
         $errors = [];
 
         if ($this->validateConfiguration($configuration)) {
-            if (strlen($configuration[static::CONFIG_KEY_TS_ID]) <= static::CONFIG_MAXLENGTH) {
-                $this->configuration->set(static::CONFIG_KEY_TS_ID, $configuration[static::CONFIG_KEY_TS_ID]);
+            if (strlen($configuration[static::CONFIG_KEY_CLIENT_ID]) <= static::CONFIG_MAXLENGTH) {
+                $this->configuration->set(static::CONFIG_KEY_CLIENT_ID, $configuration[static::CONFIG_KEY_CLIENT_ID]);
             } else {
-                $errors[] = 'CONFIG_KEY_TS_ID value is too long';
+                $errors[] = 'CONFIG_KEY_CLIENT_ID value is too long';
             }
 
             if (strlen($configuration[static::CONFIG_KEY_CLIENT_SECRET]) <= static::CONFIG_MAXLENGTH) {
@@ -66,6 +66,6 @@ final class ClientConfigurationTextDataConfiguration implements DataConfiguratio
      */
     public function validateConfiguration(array $configuration): bool
     {
-        return isset($configuration[static::CONFIG_KEY_TS_ID]) && isset($configuration[static::CONFIG_KEY_CLIENT_SECRET]);
+        return isset($configuration[static::CONFIG_KEY_CLIENT_ID]) && isset($configuration[static::CONFIG_KEY_CLIENT_SECRET]);
     }
 }
