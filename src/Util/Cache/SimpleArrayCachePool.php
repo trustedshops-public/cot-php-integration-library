@@ -18,7 +18,7 @@ class SimpleArrayCachePool implements CacheItemPoolInterface
     /** @var array<int, CacheItemInterface> */
     private array $deferredItems = [];
 
-    public function getItem(string $key)
+    public function getItem($key)
     {
         $this->validateKey($key);
 
@@ -46,7 +46,7 @@ class SimpleArrayCachePool implements CacheItemPoolInterface
         return $items;
     }
 
-    public function hasItem(string $key)
+    public function hasItem($key)
     {
         $this->validateKey($key);
 
@@ -68,7 +68,7 @@ class SimpleArrayCachePool implements CacheItemPoolInterface
         return true;
     }
 
-    public function deleteItem(string $key)
+    public function deleteItem($key)
     {
         $this->validateKey($key);
         unset($this->items[$key]);
