@@ -73,16 +73,19 @@ For more detailed examples, please refer to the [`examples/`](./examples/) direc
 ### Setup
 
 1. **Install dependencies:**
+
    ```bash
    composer install
    ```
 
 2. **Generate certificates (for HTTPS testing):**
+
    ```bash
    make certs
    ```
 
 3. **Start development environment:**
+
    ```bash
    make dev
    ```
@@ -90,18 +93,19 @@ For more detailed examples, please refer to the [`examples/`](./examples/) direc
 ### Configuration
 
 1. **Create configuration file:**
+
    ```bash
    cp test-environment/config.example.php test-environment/config.php
    ```
 
 2. **Update configuration with your credentials:**
+
    ```php
    <?php
    return [
-       'ts_id' => 'YOUR_ACTUAL_TS_ID',
-       'client_id' => 'trstd-switch-YOUR_ACTUAL_TS_ID',
-       'client_secret' => 'YOUR_ACTUAL_CLIENT_SECRET',
-       'environment' => 'qa'
+        'tlciid' => 'YOUR_ACTUAL_TLCIID',
+        'client_id' => 'YOUR_ACTUAL_CLIENT_ID',
+        'client_secret' => 'YOUR_ACTUAL_CLIENT_SECRET','environment' => 'qa'
    ];
    ?>
    ```
@@ -111,27 +115,30 @@ For more detailed examples, please refer to the [`examples/`](./examples/) direc
 The project includes a comprehensive Makefile with the following commands:
 
 #### 🐳 Docker Environment
+
 - `make dev` - Start Docker with live file watching
 - `make docker-stop` - Stop Docker environment
 
 #### 🔐 Certificates
-- `make certs` - Generate self-signed localhost TLS certs for HTTPS (8443)
 
+- `make certs` - Generate self-signed localhost TLS certs for HTTPS (8443)
 
 ### Testing
 
 The project includes a test environment for development and testing:
 
 1. **Start the test environment:**
+
    ```bash
    make dev
    ```
 
 2. **Access the test page:**
-   - **HTTPS (recommended)**: https://localhost:8443/oauth-integration-test.php
-   - **HTTP (dev only)**: http://localhost:8081/oauth-integration-test.php
+   - **HTTPS (recommended)**: <https://localhost:8443/oauth-integration-test.php>
+   - **HTTP (dev only)**: <http://localhost:8081/oauth-integration-test.php>
 
 3. **Run automated tests:**
+
    ```bash
    make test
    ```
@@ -142,11 +149,13 @@ For debugging with Xdebug:
 
 1. **Start Xdebug in your IDE first** (Cursor, VS Code, PhpStorm)
 2. **Run development environment:**
+
    ```bash
    make dev
    ```
+
 3. **Set breakpoints** in your PHP code
-4. **Visit test page**: https://localhost:8443/oauth-integration-test.php
+4. **Visit test page**: <https://localhost:8443/oauth-integration-test.php>
 5. **Code will pause** at breakpoints for inspection
 
 **Important:** Always start Xdebug in IDE before running `make dev`. The environment will attach to your IDE's debugger on `host.docker.internal:9003`.

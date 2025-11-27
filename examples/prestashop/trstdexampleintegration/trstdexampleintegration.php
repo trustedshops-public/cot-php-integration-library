@@ -38,8 +38,7 @@ class trstdexampleintegration extends Module
         $this->cotAuthRepository = new COTAuthRepository();
 
         // Prepare required parameters for the COT Auth client
-        $tsId = Configuration::get(ClientConfigurationTextDataConfiguration::CONFIG_KEY_TS_ID);
-        $clientId = 'trstd-switch-' . $tsId;
+        $clientId = Configuration::get(ClientConfigurationTextDataConfiguration::CONFIG_KEY_CLIENT_ID);
         $clientSecret = Configuration::get(ClientConfigurationTextDataConfiguration::CONFIG_KEY_CLIENT_SECRET);
 
         // Initialize the COT Auth client

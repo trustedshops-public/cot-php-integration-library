@@ -160,8 +160,6 @@ final class Client
         }
     }
 
-
-
     /**
      * @param LoggerInterface $logger logger to set
      * @return void
@@ -272,13 +270,25 @@ final class Client
             'code_verifier' => $this->getCodeVerifierCookie(),
         ];
 
-        $response = $this->httpClient->request("POST", "token", ['headers' => $headers, 'body' => $data, 'base_uri' => $this->authServerBaseUri]);
-        $responseJson = json_decode($response->getContent());
-        if (!$responseJson || isset($responseJson->error)) {
+        try {
+            $response = $this->httpClient->request("POST", "token", ['headers' => $headers, 'body' => $data, 'base_uri' => $this->authServerBaseUri]);
+            $responseJson = json_decode($response->getContent());
+            if (!$responseJson || isset($responseJson->error)) {
+                $this->logger->error('Token exchange failed', [
+                    'error' => $responseJson->error ?? 'unknown',
+                    'error_description' => $responseJson->error_description ?? 'no description'
+                ]);
+                return null;
+            }
+
+            return new Token($responseJson->id_token, $responseJson->refresh_token, $responseJson->access_token);
+        } catch (Exception $ex) {
+            $this->logger->error('Token exchange request failed', [
+                'message' => $ex->getMessage(),
+                'status_code' => method_exists($ex, 'getResponse') ? $ex->getResponse()->getStatusCode() : 'unknown'
+            ]);
             return null;
         }
-
-        return new Token($responseJson->id_token, $responseJson->refresh_token, $responseJson->access_token);
     }
 
     /**
