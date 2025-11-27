@@ -1,3 +1,10 @@
+## [1.6.2](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.6.1...1.6.2) (2025-11-27)
+
+
+### Bug Fixes
+
+* remove return type hints for PSR Cache 1.0 compatibility ([599f90b](https://github.com/trustedshops-public/cot-php-integration-library/commit/599f90b96d78dd3cdf54e143cf71f409bc2fe5ce))
+
 ## [1.6.1](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.6.0...1.6.1) (2025-11-27)
 
 
