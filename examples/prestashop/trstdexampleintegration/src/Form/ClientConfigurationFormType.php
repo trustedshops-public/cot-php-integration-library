@@ -13,8 +13,8 @@ class ClientConfigurationFormType extends TranslatorAwareType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('COT_TS_ID', TextType::class, [
-                'label' => $this->trans('TsID', 'Modules.TRSTDExampleIntegration.Admin'),
+            ->add('COT_CLIENT_ID', TextType::class, [
+                'label' => $this->trans('Client ID', 'Modules.TRSTDExampleIntegration.Admin'),
             ])
             ->add('COT_CLIENT_SECRET', TextType::class, [
                 'label' => $this->trans('Client Secret', 'Modules.TRSTDExampleIntegration.Admin'),
