@@ -1,3 +1,9 @@
+## [1.6.1](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.6.0...1.6.1) (2025-12-03)
+
+### Bug Fixes
+
+* **SW-822:** php74 compatibility and tlciid migration ([#23](https://github.com/trustedshops-public/cot-php-integration-library/issues/23)) ([a6dc34f](https://github.com/trustedshops-public/cot-php-integration-library/commit/a6dc34f37902a54e61998e312eb8ba53e8c203cf))
+
 ## [1.6.0](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.5.0...1.6.0) (2025-11-10)
 
 
