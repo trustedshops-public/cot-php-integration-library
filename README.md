@@ -105,7 +105,8 @@ For more detailed examples, please refer to the [`examples/`](./examples/) direc
    return [
         'tlciid' => 'YOUR_ACTUAL_TLCIID',
         'client_id' => 'YOUR_ACTUAL_CLIENT_ID',
-        'client_secret' => 'YOUR_ACTUAL_CLIENT_SECRET','environment' => 'qa'
+        'client_secret' => 'YOUR_ACTUAL_CLIENT_SECRET',
+        'environment' => 'qa'
    ];
    ?>
    ```
