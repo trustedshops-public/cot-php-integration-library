@@ -7,12 +7,12 @@ filter_main: &filter_main
         - main
 
 orbs:
-  semantic-release: trustedshops-public/semantic-release@6.0.0
+  semantic-release: trustedshops-public/semantic-release@6.1.0
 
 executors:
   php:
     docker:
-      - image: cimg/php:8.4.14
+      - image: cimg/php:8.5.0
     resource_class: small
 
 jobs:
