@@ -283,9 +283,10 @@ final class Client
 
             return new Token($responseJson->id_token, $responseJson->refresh_token, $responseJson->access_token);
         } catch (Exception $ex) {
+            $response = method_exists($ex, 'getResponse') ? $ex->getResponse() : null;
             $this->logger->error('Token exchange request failed', [
                 'message' => $ex->getMessage(),
-                'status_code' => method_exists($ex, 'getResponse') ? $ex->getResponse()->getStatusCode() : 'unknown'
+                'status_code' => ($response !== null) ? $response->getStatusCode() : 'unknown'
             ]);
             return null;
         }
