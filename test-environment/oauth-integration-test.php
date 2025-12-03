@@ -135,8 +135,8 @@ $cookieSet = isset($_COOKIE['TRSTD_ID_TOKEN']);
         <h1>🔐 OAuth Integration Test</h1>
 
         <div class="status info">
-            <strong>TLCIID:</strong> <?php echo htmlspecialchars($config['tlciid']); ?> </br>
-            <strong>Client ID:</strong> <?php echo htmlspecialchars($config['client_id']); ?> </br>
+            <strong>TLCIID:</strong> <?php echo htmlspecialchars($config['tlciid']); ?> <br />
+            <strong>Client ID:</strong> <?php echo htmlspecialchars($config['client_id']); ?> <br />
             <strong>Environment:</strong> <?php echo strtoupper($config['environment']); ?>
         </div>
 
