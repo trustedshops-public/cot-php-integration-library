@@ -1,3 +1,9 @@
+## [1.6.2](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.6.1...1.6.2) (2025-12-12)
+
+### Bug Fixes
+
+* update parameter types for backward compatibility in SimpleArrayCacheItem ([#24](https://github.com/trustedshops-public/cot-php-integration-library/issues/24)) ([822f78e](https://github.com/trustedshops-public/cot-php-integration-library/commit/822f78e2aab7c70e2cdc86f1a0f194a99fc9f81a))
+
 ## [1.6.1](https://github.com/trustedshops-public/cot-php-integration-library/compare/1.6.0...1.6.1) (2025-12-03)
 
 ### Bug Fixes
