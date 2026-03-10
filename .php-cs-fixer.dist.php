@@ -36,10 +36,6 @@ $config
     ->setLineEnding("\n");
 
 // Allow running on newer PHP versions than the project minimum
-try {
-    $config->setCacheFile(__DIR__ . '/.php-cs-fixer.cache');
-} catch (\Exception $e) {
-    // Ignore if method doesn't exist
-}
+$config->setUnsupportedPhpVersionAllowed(true);
 
 return $config;

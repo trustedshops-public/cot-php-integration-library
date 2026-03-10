@@ -557,7 +557,7 @@ final class Client
                 'domain' => '.' . $this->getCookieDomain(),
                 'secure' => true,
                 'httponly' => false,
-                'samesite' => 'Strict'
+                'samesite' => 'Strict',
             ];
             setcookie(self::IDENTITY_COOKIE_KEY, $idToken, $options);
         }
@@ -575,7 +575,7 @@ final class Client
                 'domain' => '.' . $this->getCookieDomain(),
                 'secure' => true,
                 'httponly' => false,
-                'samesite' => 'Strict'
+                'samesite' => 'Strict',
             ];
             setcookie(self::IDENTITY_COOKIE_KEY, '', $options);
         }
