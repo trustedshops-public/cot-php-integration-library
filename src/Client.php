@@ -370,6 +370,21 @@ final class Client
                 throw new UnexpectedErrorException('Unexpected error occurred: ' . $ex->getMessage(), 0, $ex);
             }
 
+            // If access token is valid, also check if ID token is expired or invalid
+            // to ensure the cookie always contains a fresh ID token
+            if (!$shouldRefresh) {
+                try {
+                    $decodedIdToken = $this->decodeToken($token->idToken, false);
+                    if (isset($decodedIdToken->exp) && $decodedIdToken->exp < time()) {
+                        $this->logger->debug('ID token is expired. Refreshing to update cookie...');
+                        $shouldRefresh = true;
+                    }
+                } catch (TokenInvalidException $ex) {
+                    $this->logger->debug('ID token format is invalid. Refreshing to update cookie...');
+                    $shouldRefresh = true;
+                }
+            }
+
             if ($shouldRefresh) {
                 try {
                     $refreshedToken = $this->getRefreshedToken($token->refreshToken);
