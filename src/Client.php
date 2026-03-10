@@ -415,8 +415,6 @@ final class Client
         try {
             $decodedToken = $this->decodeToken($token->idToken, false);
             $this->authStorage->set($decodedToken->sub, $token);
-        } catch (ExpiredException $ex) {
-            $this->logger->debug('id token is expired. returning...');
         } catch (TokenInvalidException $ex) {
             $this->logger->error('Invalid token format: ' . $ex->getMessage());
         } catch (Exception $ex) {
@@ -435,8 +433,6 @@ final class Client
             $decodedToken = $this->decodeToken($idToken, false);
 
             return $this->authStorage->get($decodedToken->sub);
-        } catch (ExpiredException $ex) {
-            $this->logger->debug('id token is expired. returning...');
         } catch (TokenInvalidException $ex) {
             $this->logger->error('Invalid token format: ' . $ex->getMessage());
         } catch (Exception $ex) {
