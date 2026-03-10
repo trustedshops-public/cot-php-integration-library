@@ -408,11 +408,13 @@ final class Client
      */
     private function setTokenOnStorage(Token $token)
     {
+        // Always set the identity cookie first, regardless of storage success
+        // This ensures the frontend is updated even if token storage fails
+        $this->setIdentityCookie($token->idToken);
+
         try {
             $decodedToken = $this->decodeToken($token->idToken, false);
             $this->authStorage->set($decodedToken->sub, $token);
-            // Update the identity cookie with the new id_token to keep frontend in sync
-            $this->setIdentityCookie($token->idToken);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
         } catch (TokenInvalidException $ex) {
