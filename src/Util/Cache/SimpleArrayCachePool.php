@@ -43,6 +43,7 @@ class SimpleArrayCachePool implements CacheItemPoolInterface
         foreach ($keys as $key) {
             $items[$key] = $this->getItem($key);
         }
+
         return $items;
     }
 
@@ -65,6 +66,7 @@ class SimpleArrayCachePool implements CacheItemPoolInterface
     {
         $this->items = [];
         $this->deferredItems = [];
+
         return true;
     }
 
@@ -72,6 +74,7 @@ class SimpleArrayCachePool implements CacheItemPoolInterface
     {
         $this->validateKey($key);
         unset($this->items[$key]);
+
         return true;
     }
 
@@ -80,6 +83,7 @@ class SimpleArrayCachePool implements CacheItemPoolInterface
         foreach ($keys as $key) {
             $this->deleteItem($key);
         }
+
         return true;
     }
 
@@ -87,14 +91,17 @@ class SimpleArrayCachePool implements CacheItemPoolInterface
     {
         if ($item instanceof SimpleArrayCacheItem) {
             $this->items[$item->getKey()] = $item;
+
             return true;
         }
+
         return false;
     }
 
     public function saveDeferred(CacheItemInterface $item)
     {
         $this->deferredItems[] = $item;
+
         return true;
     }
 
@@ -104,6 +111,7 @@ class SimpleArrayCachePool implements CacheItemPoolInterface
             $this->save($item);
         }
         $this->deferredItems = [];
+
         return true;
     }
 

@@ -6,24 +6,20 @@ namespace TRSTD\COT;
 
 use Exception;
 use Firebase\JWT\ExpiredException;
-use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
+use Firebase\JWT\JWT;
+use Monolog\Logger;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Monolog\Logger;
-use Psr\Log\LoggerInterface;
-use Psr\Cache\CacheItemPoolInterface;
-use TRSTD\COT\AuthStorageInterface;
-use TRSTD\COT\Token;
-use TRSTD\COT\ActionType;
-use TRSTD\COT\ConsumerData;
-use TRSTD\COT\Exception\UnexpectedErrorException;
 use TRSTD\COT\Exception\RequiredParameterMissingException;
 use TRSTD\COT\Exception\TokenInvalidException;
 use TRSTD\COT\Exception\TokenNotFoundException;
+use TRSTD\COT\Exception\UnexpectedErrorException;
+use TRSTD\COT\Util\Cache\SimpleArrayCachePool;
 use TRSTD\COT\Util\EncryptionUtils;
 use TRSTD\COT\Util\PKCEUtils;
-use TRSTD\COT\Util\Cache\SimpleArrayCachePool;
 
 final class Client
 {
@@ -112,7 +108,7 @@ final class Client
         $this->clientSecret = $clientSecret;
         $this->authStorage = $authStorage;
 
-        $this->logger = new Logger("TRSTD/COT");
+        $this->logger = new Logger('TRSTD/COT');
         $this->httpClient = HttpClient::create();
         $this->cacheItemPool = new SimpleArrayCachePool();
     }
@@ -151,11 +147,12 @@ final class Client
                 'Authorization: Bearer ' . $accessToken,
             ];
 
-            $response = $this->httpClient->request("GET", "consumer-data", ['headers' => $headers, 'base_uri' => $this->resourceServerBaseUri]);
+            $response = $this->httpClient->request('GET', 'consumer-data', ['headers' => $headers, 'base_uri' => $this->resourceServerBaseUri]);
 
             return json_decode($response->getContent());
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
+
             return null;
         }
     }
@@ -201,7 +198,7 @@ final class Client
             return self::AUTH_SERVER_BASE_URI_PROD;
         }
 
-        throw new Exception("Invalid environment.");
+        throw new Exception('Invalid environment.');
     }
 
     /**
@@ -218,7 +215,7 @@ final class Client
             return self::RESOURCE_SERVER_BASE_URI_PROD;
         }
 
-        throw new Exception("Invalid environment.");
+        throw new Exception('Invalid environment.');
     }
 
     /**
@@ -266,26 +263,27 @@ final class Client
     private function getToken($code)
     {
         $headers = [
-            'Content-Type: application/x-www-form-urlencoded'
+            'Content-Type: application/x-www-form-urlencoded',
         ];
 
         $data = [
             'grant_type' => 'authorization_code',
             'client_id' => $this->clientId,
             'client_secret' => $this->clientSecret,
-            'redirect_uri' => "https://" . strtok($_SERVER['HTTP_HOST'] . $_SERVER["REQUEST_URI"], '?'),
+            'redirect_uri' => 'https://' . strtok($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'], '?'),
             'code' => $code,
             'code_verifier' => $this->getCodeVerifierCookie(),
         ];
 
         try {
-            $response = $this->httpClient->request("POST", "token", ['headers' => $headers, 'body' => $data, 'base_uri' => $this->authServerBaseUri]);
+            $response = $this->httpClient->request('POST', 'token', ['headers' => $headers, 'body' => $data, 'base_uri' => $this->authServerBaseUri]);
             $responseJson = json_decode($response->getContent());
             if (!$responseJson || isset($responseJson->error)) {
                 $this->logger->error('Token exchange failed', [
                     'error' => $responseJson->error ?? 'unknown',
-                    'error_description' => $responseJson->error_description ?? 'no description'
+                    'error_description' => $responseJson->error_description ?? 'no description',
                 ]);
+
                 return null;
             }
 
@@ -294,8 +292,9 @@ final class Client
             $response = method_exists($ex, 'getResponse') ? $ex->getResponse() : null;
             $this->logger->error('Token exchange request failed', [
                 'message' => $ex->getMessage(),
-                'status_code' => ($response !== null) ? $response->getStatusCode() : 'unknown'
+                'status_code' => ($response !== null) ? $response->getStatusCode() : 'unknown',
             ]);
+
             return null;
         }
     }
@@ -307,7 +306,7 @@ final class Client
     private function getRefreshedToken($refreshToken)
     {
         $headers = [
-            'Content-Type: application/x-www-form-urlencoded'
+            'Content-Type: application/x-www-form-urlencoded',
         ];
 
         $data = [
@@ -318,7 +317,7 @@ final class Client
         ];
 
         try {
-            $response = $this->httpClient->request("POST", "token", ['headers' => $headers, 'body' => $data, 'base_uri' => $this->authServerBaseUri]);
+            $response = $this->httpClient->request('POST', 'token', ['headers' => $headers, 'body' => $data, 'base_uri' => $this->authServerBaseUri]);
             $responseJson = json_decode($response->getContent());
             if (!$responseJson || isset($responseJson->error)) {
                 // Check if error indicates refresh token is permanently invalid
@@ -326,12 +325,14 @@ final class Client
                     $this->logger->debug('Refresh token is invalid or revoked: ' . $responseJson->error);
                     $this->removeIdentityCookie();
                 }
+
                 return null;
             }
 
             return new Token($responseJson->id_token, $responseJson->refresh_token, $responseJson->access_token);
         } catch (Exception $ex) {
             $this->logger->debug('Error occurred while refreshing token: ' . $ex->getMessage());
+
             return null;
         }
     }
@@ -394,6 +395,7 @@ final class Client
             }
 
             $this->logger->debug('Access token is valid. returning...');
+
             return $token->accessToken;
         }
 
@@ -429,6 +431,7 @@ final class Client
     {
         try {
             $decodedToken = $this->decodeToken($idToken, false);
+
             return $this->authStorage->get($decodedToken->sub);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
@@ -458,6 +461,7 @@ final class Client
             if (count($tks) < 3 || !isset($tks[1]) || empty($tks[1])) {
                 throw new TokenInvalidException('Token format is invalid. Expected JWT with 3 parts.');
             }
+
             return JWT::jsonDecode(JWT::urlsafeB64Decode($tks[1]));
         }
 
@@ -472,7 +476,7 @@ final class Client
         $cachedJWKSItem = $this->cacheItemPool->getItem(self::JWKS_CACHE_KEY);
 
         if (!$cachedJWKSItem->isHit()) {
-            $response = $this->httpClient->request("GET", "certs", ['base_uri' => $this->authServerBaseUri]);
+            $response = $this->httpClient->request('GET', 'certs', ['base_uri' => $this->authServerBaseUri]);
             $jwks = json_decode($response->getContent(), true);
             $cachedJWKSItem->set($jwks)->expiresAfter(self::JWKS_CACHE_TTL);
             $this->cacheItemPool->save($cachedJWKSItem);
@@ -514,6 +518,7 @@ final class Client
         }
 
         $parts = explode('.', $token);
+
         return count($parts) >= 3 && !empty($parts[1]);
     }
 
@@ -529,6 +534,7 @@ final class Client
 
         if (!$this->isValidJwtFormat($token)) {
             $this->removeIdentityCookie();
+
             return null;
         }
 
@@ -542,7 +548,7 @@ final class Client
     private function setIdentityCookie($idToken)
     {
         if (!headers_sent()) {
-            setcookie(self::IDENTITY_COOKIE_KEY, $idToken, strtotime("2038-01-1 00:00:00"), '/', $this->getCookieDomain(), true, false);
+            setcookie(self::IDENTITY_COOKIE_KEY, $idToken, strtotime('2038-01-1 00:00:00'), '/', $this->getCookieDomain(), true, false);
         }
     }
 
@@ -604,6 +610,7 @@ final class Client
     private function getCookieDomain()
     {
         $host = $_SERVER['HTTP_HOST'] ?? '';
+
         // Remove port if present (e.g., "example.com:8080" becomes "example.com")
         return explode(':', $host)[0];
     }

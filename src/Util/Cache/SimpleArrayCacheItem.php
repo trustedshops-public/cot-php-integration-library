@@ -43,12 +43,14 @@ class SimpleArrayCacheItem implements CacheItemInterface
     {
         $this->value = $value;
         $this->isHit = true;
+
         return $this;
     }
 
     public function expiresAt($expiration): static
     {
         $this->expiration = $expiration;
+
         return $this;
     }
 
@@ -61,6 +63,7 @@ class SimpleArrayCacheItem implements CacheItemInterface
         } else {
             $this->expiration = new \DateTime('@' . (time() + (int) $time));
         }
+
         return $this;
     }
 
