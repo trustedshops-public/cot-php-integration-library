@@ -549,10 +549,11 @@ final class Client
             // HttpOnly = false allows JavaScript to read the cookie (required for trstd-login element)
             // Secure = true ensures cookie only sent over HTTPS
             // SameSite = Lax for CSRF protection while allowing normal navigation
+            // Domain with leading dot allows access across subdomains
             $options = [
                 'expires' => strtotime('2038-01-1 00:00:00'),
                 'path' => '/',
-                'domain' => '',  // Empty domain = current host only
+                'domain' => '.' . $this->getCookieDomain(),
                 'secure' => true,
                 'httponly' => false,
                 'samesite' => 'Lax'
@@ -570,7 +571,7 @@ final class Client
             $options = [
                 'expires' => time() - 3600,
                 'path' => '/',
-                'domain' => '',
+                'domain' => '.' . $this->getCookieDomain(),
                 'secure' => true,
                 'httponly' => false,
                 'samesite' => 'Lax'
