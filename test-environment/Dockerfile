@@ -26,6 +26,9 @@ WORKDIR /var/www/html
 # Copy composer files
 COPY composer.json composer.lock ./
 
+# Copy source code (required for autoloading)
+COPY src/ ./src/
+
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader
 
