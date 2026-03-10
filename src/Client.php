@@ -384,7 +384,6 @@ final class Client
                     return $token->accessToken;
                 } catch (Exception $ex) {
                     $this->logger->debug('Error occurred while refreshing the token: ' . $ex->getMessage());
-                    $this->removeIdentityCookie();
                     throw $ex;
                 }
             }
