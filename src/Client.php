@@ -548,15 +548,16 @@ final class Client
         if (!headers_sent()) {
             // HttpOnly = false allows JavaScript to read the cookie (required for trstd-login element)
             // Secure = true ensures cookie only sent over HTTPS
-            // SameSite = Lax for CSRF protection while allowing normal navigation
+            // SameSite = Strict for maximum CSRF protection
             // Domain with leading dot allows access across subdomains
+            // Expires = max timestamp for persistent cookie (Year 2038)
             $options = [
-                'expires' => strtotime('2038-01-1 00:00:00'),
+                'expires' => 2147483647, // Max 32-bit timestamp (2038-01-19)
                 'path' => '/',
                 'domain' => '.' . $this->getCookieDomain(),
                 'secure' => true,
                 'httponly' => false,
-                'samesite' => 'Lax'
+                'samesite' => 'Strict'
             ];
             setcookie(self::IDENTITY_COOKIE_KEY, $idToken, $options);
         }
@@ -574,7 +575,7 @@ final class Client
                 'domain' => '.' . $this->getCookieDomain(),
                 'secure' => true,
                 'httponly' => false,
-                'samesite' => 'Lax'
+                'samesite' => 'Strict'
             ];
             setcookie(self::IDENTITY_COOKIE_KEY, '', $options);
         }
