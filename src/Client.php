@@ -245,9 +245,17 @@ final class Client
     {
         $idToken = $this->getIdentityCookie();
         if ($idToken) {
-            $decodedToken = $this->decodeToken($idToken, false);
-            $this->authStorage->remove($decodedToken->sub);
-            $this->removeIdentityCookie();
+            try {
+                $decodedToken = $this->decodeToken($idToken, false);
+                $this->authStorage->remove($decodedToken->sub);
+                $this->removeIdentityCookie();
+            } catch (TokenInvalidException $ex) {
+                $this->logger->error('Invalid token format during disconnect: ' . $ex->getMessage());
+                $this->removeIdentityCookie();
+            } catch (Exception $ex) {
+                $this->logger->error('Error during disconnect: ' . $ex->getMessage());
+                $this->removeIdentityCookie();
+            }
         }
     }
 
@@ -343,6 +351,9 @@ final class Client
             } catch (ExpiredException $ex) {
                 $this->logger->debug('access token is expired. refreshing...');
                 $shouldRefresh = true;
+            } catch (TokenInvalidException $ex) {
+                $this->logger->error('Invalid access token format: ' . $ex->getMessage());
+                $shouldRefresh = true;
             } catch (Exception $ex) {
                 $this->logger->error($ex->getMessage());
                 throw new UnexpectedErrorException('Unexpected error occurred: ' . $ex->getMessage(), 0, $ex);
@@ -380,8 +391,12 @@ final class Client
         try {
             $decodedToken = $this->decodeToken($token->idToken, false);
             $this->authStorage->set($decodedToken->sub, $token);
+            // Update the identity cookie with the new id_token to keep frontend in sync
+            $this->setIdentityCookie($token->idToken);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
+        } catch (TokenInvalidException $ex) {
+            $this->logger->error('Invalid token format: ' . $ex->getMessage());
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
             throw new UnexpectedErrorException('Unexpected error occurred.: ' . $ex->getMessage(), 0, $ex);
@@ -399,6 +414,8 @@ final class Client
             return $this->authStorage->get($decodedToken->sub);
         } catch (ExpiredException $ex) {
             $this->logger->debug('id token is expired. returning...');
+        } catch (TokenInvalidException $ex) {
+            $this->logger->error('Invalid token format: ' . $ex->getMessage());
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
             throw new UnexpectedErrorException('Unexpected error occurred: ' . $ex->getMessage(), 0, $ex);
@@ -414,12 +431,15 @@ final class Client
      */
     private function decodeToken($token, $validateExp = true)
     {
-        if (!$token) {
+        if (!$token || !is_string($token)) {
             throw new TokenInvalidException('Token cannot be empty or null.');
         }
 
         if (!$validateExp) {
             $tks = explode('.', $token);
+            if (count($tks) < 3 || !isset($tks[1]) || empty($tks[1])) {
+                throw new TokenInvalidException('Token format is invalid. Expected JWT with 3 parts.');
+            }
             return JWT::jsonDecode(JWT::urlsafeB64Decode($tks[1]));
         }
 
@@ -451,11 +471,7 @@ final class Client
      */
     private function handleAuthCode($code)
     {
-        $token = $this->connect($code);
-
-        if ($token) {
-            $this->setIdentityCookie($token->idToken);
-        }
+        $this->connect($code);
     }
 
     /**
@@ -470,11 +486,35 @@ final class Client
     }
 
     /**
+     * @param string|null $token
+     * @return bool
+     */
+    private function isValidJwtFormat($token)
+    {
+        if (!$token || !is_string($token)) {
+            return false;
+        }
+
+        $parts = explode('.', $token);
+        return count($parts) >= 3 && !empty($parts[1]);
+    }
+
+    /**
      * @return string|null
      */
     private function getIdentityCookie()
     {
-        return $_COOKIE[self::IDENTITY_COOKIE_KEY] ?? null;
+        $token = $_COOKIE[self::IDENTITY_COOKIE_KEY] ?? null;
+        if ($token === null) {
+            return null;
+        }
+
+        if (!$this->isValidJwtFormat($token)) {
+            $this->removeIdentityCookie();
+            return null;
+        }
+
+        return $token;
     }
 
     /**
