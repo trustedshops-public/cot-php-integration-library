@@ -349,9 +349,6 @@ final class Client
         $token = $this->getTokenFromStorage($idToken);
 
         if ($token) {
-            // Keep identity cookie in sync with the latest token available in storage.
-            $this->setIdentityCookie($token->idToken);
-
             $shouldRefresh = false;
 
             try {
@@ -385,7 +382,7 @@ final class Client
                     $token->refreshToken = $refreshedToken->refreshToken;
                     $token->accessToken = $refreshedToken->accessToken;
                     $this->setTokenOnStorage($token);
-                    $this->logger->debug('Access token is refreshed. returning...');
+                    $this->logger->debug('Tokens refreshed. ID token cookie updated.');
 
                     return $token->accessToken;
                 } catch (Exception $ex) {
@@ -394,6 +391,8 @@ final class Client
                 }
             }
 
+            // Tokens are valid, ensure cookie is in sync with storage
+            $this->setIdentityCookie($token->idToken);
             $this->logger->debug('Access token is valid. returning...');
 
             return $token->accessToken;
