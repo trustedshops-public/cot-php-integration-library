@@ -406,8 +406,6 @@ final class Client
                 }
             }
 
-            // Tokens are valid, ensure cookie is in sync with storage
-            $this->setIdentityCookie($token->idToken);
             $this->logger->debug('Access token is valid. returning...');
 
             return $token->accessToken;
