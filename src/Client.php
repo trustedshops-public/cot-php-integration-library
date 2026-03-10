@@ -317,13 +317,18 @@ final class Client
             'refresh_token' => $refreshToken,
         ];
 
-        $response = $this->httpClient->request("POST", "token", ['headers' => $headers, 'body' => $data, 'base_uri' => $this->authServerBaseUri]);
-        $responseJson = json_decode($response->getContent());
-        if (!$responseJson || isset($responseJson->error)) {
+        try {
+            $response = $this->httpClient->request("POST", "token", ['headers' => $headers, 'body' => $data, 'base_uri' => $this->authServerBaseUri]);
+            $responseJson = json_decode($response->getContent());
+            if (!$responseJson || isset($responseJson->error)) {
+                return null;
+            }
+
+            return new Token($responseJson->id_token, $responseJson->refresh_token, $responseJson->access_token);
+        } catch (Exception $ex) {
+            $this->logger->debug('Error occurred while refreshing token: ' . $ex->getMessage());
             return null;
         }
-
-        return new Token($responseJson->id_token, $responseJson->refresh_token, $responseJson->access_token);
     }
 
     /**
@@ -338,6 +343,9 @@ final class Client
         $token = $this->getTokenFromStorage($idToken);
 
         if ($token) {
+            // Keep identity cookie in sync with the latest token available in storage.
+            $this->setIdentityCookie($token->idToken);
+
             $shouldRefresh = false;
 
             try {
@@ -363,8 +371,14 @@ final class Client
                 try {
                     $refreshedToken = $this->getRefreshedToken($token->refreshToken);
 
+                    if (!$refreshedToken) {
+                        throw new TokenNotFoundException('A valid token cannot be found in storage. Authentication is required.');
+                    }
+
+                    $token->idToken = $refreshedToken->idToken;
+                    $token->refreshToken = $refreshedToken->refreshToken;
                     $token->accessToken = $refreshedToken->accessToken;
-                    $this->setTokenOnStorage($refreshedToken);
+                    $this->setTokenOnStorage($token);
                     $this->logger->debug('Access token is refreshed. returning...');
 
                     return $token->accessToken;
