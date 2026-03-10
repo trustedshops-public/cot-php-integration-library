@@ -546,7 +546,18 @@ final class Client
     private function setIdentityCookie($idToken)
     {
         if (!headers_sent()) {
-            setcookie(self::IDENTITY_COOKIE_KEY, $idToken, strtotime('2038-01-1 00:00:00'), '/', $this->getCookieDomain(), true, false);
+            // HttpOnly = false allows JavaScript to read the cookie (required for trstd-login element)
+            // Secure = true ensures cookie only sent over HTTPS
+            // SameSite = Lax for CSRF protection while allowing normal navigation
+            $options = [
+                'expires' => strtotime('2038-01-1 00:00:00'),
+                'path' => '/',
+                'domain' => '',  // Empty domain = current host only
+                'secure' => true,
+                'httponly' => false,
+                'samesite' => 'Lax'
+            ];
+            setcookie(self::IDENTITY_COOKIE_KEY, $idToken, $options);
         }
     }
 
@@ -556,7 +567,15 @@ final class Client
     private function removeIdentityCookie()
     {
         if (!headers_sent()) {
-            setcookie(self::IDENTITY_COOKIE_KEY, '', time() - 3600, '/', $this->getCookieDomain(), true, false);
+            $options = [
+                'expires' => time() - 3600,
+                'path' => '/',
+                'domain' => '',
+                'secure' => true,
+                'httponly' => false,
+                'samesite' => 'Lax'
+            ];
+            setcookie(self::IDENTITY_COOKIE_KEY, '', $options);
         }
     }
 
