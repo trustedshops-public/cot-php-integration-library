@@ -2,8 +2,6 @@
 
 namespace TRSTD\COT;
 
-use TRSTD\COT\Token;
-
 interface AuthStorageInterface
 {
     /**

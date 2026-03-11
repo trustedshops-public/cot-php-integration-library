@@ -13,6 +13,7 @@ final class EncryptionUtils
     {
         $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc'));
         $encrypted = openssl_encrypt($value, 'aes-256-cbc', $key, 0, $iv);
+
         return base64_encode($encrypted . '::' . $iv);
     }
 
@@ -24,6 +25,7 @@ final class EncryptionUtils
     public static function decryptValue($key, $value)
     {
         list($encryptedData, $iv) = explode('::', base64_decode($value), 2);
+
         return openssl_decrypt($encryptedData, 'aes-256-cbc', $key, 0, $iv);
     }
 }

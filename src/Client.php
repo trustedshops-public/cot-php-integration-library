@@ -6,24 +6,20 @@ namespace TRSTD\COT;
 
 use Exception;
 use Firebase\JWT\ExpiredException;
-use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
+use Firebase\JWT\JWT;
+use Monolog\Logger;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Monolog\Logger;
-use Psr\Log\LoggerInterface;
-use Psr\Cache\CacheItemPoolInterface;
-use TRSTD\COT\AuthStorageInterface;
-use TRSTD\COT\Token;
-use TRSTD\COT\ActionType;
-use TRSTD\COT\ConsumerData;
-use TRSTD\COT\Exception\UnexpectedErrorException;
 use TRSTD\COT\Exception\RequiredParameterMissingException;
 use TRSTD\COT\Exception\TokenInvalidException;
 use TRSTD\COT\Exception\TokenNotFoundException;
+use TRSTD\COT\Exception\UnexpectedErrorException;
+use TRSTD\COT\Util\Cache\SimpleArrayCachePool;
 use TRSTD\COT\Util\EncryptionUtils;
 use TRSTD\COT\Util\PKCEUtils;
-use TRSTD\COT\Util\Cache\SimpleArrayCachePool;
 
 final class Client
 {
@@ -112,7 +108,7 @@ final class Client
         $this->clientSecret = $clientSecret;
         $this->authStorage = $authStorage;
 
-        $this->logger = new Logger("TRSTD/COT");
+        $this->logger = new Logger('TRSTD/COT');
         $this->httpClient = HttpClient::create();
         $this->cacheItemPool = new SimpleArrayCachePool();
     }
@@ -151,11 +147,12 @@ final class Client
                 'Authorization: Bearer ' . $accessToken,
             ];
 
-            $response = $this->httpClient->request("GET", "consumer-data", ['headers' => $headers, 'base_uri' => $this->resourceServerBaseUri]);
+            $response = $this->httpClient->request('GET', 'consumer-data', ['headers' => $headers, 'base_uri' => $this->resourceServerBaseUri]);
 
             return json_decode($response->getContent());
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
+
             return null;
         }
     }
@@ -201,7 +198,7 @@ final class Client
             return self::AUTH_SERVER_BASE_URI_PROD;
         }
 
-        throw new Exception("Invalid environment.");
+        throw new Exception('Invalid environment.');
     }
 
     /**
@@ -218,7 +215,7 @@ final class Client
             return self::RESOURCE_SERVER_BASE_URI_PROD;
         }
 
-        throw new Exception("Invalid environment.");
+        throw new Exception('Invalid environment.');
     }
 
     /**
@@ -245,9 +242,17 @@ final class Client
     {
         $idToken = $this->getIdentityCookie();
         if ($idToken) {
-            $decodedToken = $this->decodeToken($idToken, false);
-            $this->authStorage->remove($decodedToken->sub);
-            $this->removeIdentityCookie();
+            try {
+                $decodedToken = $this->decodeToken($idToken, false);
+                $this->authStorage->remove($decodedToken->sub);
+                $this->removeIdentityCookie();
+            } catch (TokenInvalidException $ex) {
+                $this->logger->error('Invalid token format during disconnect: ' . $ex->getMessage());
+                $this->removeIdentityCookie();
+            } catch (Exception $ex) {
+                $this->logger->error('Error during disconnect: ' . $ex->getMessage());
+                $this->removeIdentityCookie();
+            }
         }
     }
 
@@ -258,26 +263,27 @@ final class Client
     private function getToken($code)
     {
         $headers = [
-            'Content-Type: application/x-www-form-urlencoded'
+            'Content-Type: application/x-www-form-urlencoded',
         ];
 
         $data = [
             'grant_type' => 'authorization_code',
             'client_id' => $this->clientId,
             'client_secret' => $this->clientSecret,
-            'redirect_uri' => "https://" . strtok($_SERVER['HTTP_HOST'] . $_SERVER["REQUEST_URI"], '?'),
+            'redirect_uri' => 'https://' . strtok($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'], '?'),
             'code' => $code,
             'code_verifier' => $this->getCodeVerifierCookie(),
         ];
 
         try {
-            $response = $this->httpClient->request("POST", "token", ['headers' => $headers, 'body' => $data, 'base_uri' => $this->authServerBaseUri]);
+            $response = $this->httpClient->request('POST', 'token', ['headers' => $headers, 'body' => $data, 'base_uri' => $this->authServerBaseUri]);
             $responseJson = json_decode($response->getContent());
             if (!$responseJson || isset($responseJson->error)) {
                 $this->logger->error('Token exchange failed', [
                     'error' => $responseJson->error ?? 'unknown',
-                    'error_description' => $responseJson->error_description ?? 'no description'
+                    'error_description' => $responseJson->error_description ?? 'no description',
                 ]);
+
                 return null;
             }
 
@@ -286,8 +292,9 @@ final class Client
             $response = method_exists($ex, 'getResponse') ? $ex->getResponse() : null;
             $this->logger->error('Token exchange request failed', [
                 'message' => $ex->getMessage(),
-                'status_code' => ($response !== null) ? $response->getStatusCode() : 'unknown'
+                'status_code' => ($response !== null) ? $response->getStatusCode() : 'unknown',
             ]);
+
             return null;
         }
     }
@@ -299,7 +306,7 @@ final class Client
     private function getRefreshedToken($refreshToken)
     {
         $headers = [
-            'Content-Type: application/x-www-form-urlencoded'
+            'Content-Type: application/x-www-form-urlencoded',
         ];
 
         $data = [
@@ -309,13 +316,25 @@ final class Client
             'refresh_token' => $refreshToken,
         ];
 
-        $response = $this->httpClient->request("POST", "token", ['headers' => $headers, 'body' => $data, 'base_uri' => $this->authServerBaseUri]);
-        $responseJson = json_decode($response->getContent());
-        if (!$responseJson || isset($responseJson->error)) {
+        try {
+            $response = $this->httpClient->request('POST', 'token', ['headers' => $headers, 'body' => $data, 'base_uri' => $this->authServerBaseUri]);
+            $responseJson = json_decode($response->getContent());
+            if (!$responseJson || isset($responseJson->error)) {
+                // Check if error indicates refresh token is permanently invalid
+                if (isset($responseJson->error) && in_array($responseJson->error, ['invalid_grant', 'invalid_token'])) {
+                    $this->logger->debug('Refresh token is invalid or revoked: ' . $responseJson->error);
+                    $this->removeIdentityCookie();
+                }
+
+                return null;
+            }
+
+            return new Token($responseJson->id_token, $responseJson->refresh_token, $responseJson->access_token);
+        } catch (Exception $ex) {
+            $this->logger->debug('Error occurred while refreshing token: ' . $ex->getMessage());
+
             return null;
         }
-
-        return new Token($responseJson->id_token, $responseJson->refresh_token, $responseJson->access_token);
     }
 
     /**
@@ -343,28 +362,52 @@ final class Client
             } catch (ExpiredException $ex) {
                 $this->logger->debug('access token is expired. refreshing...');
                 $shouldRefresh = true;
+            } catch (TokenInvalidException $ex) {
+                $this->logger->error('Invalid access token format: ' . $ex->getMessage());
+                $shouldRefresh = true;
             } catch (Exception $ex) {
                 $this->logger->error($ex->getMessage());
                 throw new UnexpectedErrorException('Unexpected error occurred: ' . $ex->getMessage(), 0, $ex);
+            }
+
+            // If access token is valid, also check if ID token is expired or invalid
+            // to ensure the cookie always contains a fresh ID token
+            if (!$shouldRefresh) {
+                try {
+                    $decodedIdToken = $this->decodeToken($token->idToken, false);
+                    if (isset($decodedIdToken->exp) && $decodedIdToken->exp < time()) {
+                        $this->logger->debug('ID token is expired. Refreshing to update cookie...');
+                        $shouldRefresh = true;
+                    }
+                } catch (TokenInvalidException $ex) {
+                    $this->logger->debug('ID token format is invalid. Refreshing to update cookie...');
+                    $shouldRefresh = true;
+                }
             }
 
             if ($shouldRefresh) {
                 try {
                     $refreshedToken = $this->getRefreshedToken($token->refreshToken);
 
+                    if (!$refreshedToken) {
+                        throw new TokenNotFoundException('A valid token cannot be found in storage. Authentication is required.');
+                    }
+
+                    $token->idToken = $refreshedToken->idToken;
+                    $token->refreshToken = $refreshedToken->refreshToken;
                     $token->accessToken = $refreshedToken->accessToken;
-                    $this->setTokenOnStorage($refreshedToken);
-                    $this->logger->debug('Access token is refreshed. returning...');
+                    $this->setTokenOnStorage($token);
+                    $this->logger->debug('Tokens refreshed. ID token cookie updated.');
 
                     return $token->accessToken;
                 } catch (Exception $ex) {
                     $this->logger->debug('Error occurred while refreshing the token: ' . $ex->getMessage());
-                    $this->removeIdentityCookie();
                     throw $ex;
                 }
             }
 
             $this->logger->debug('Access token is valid. returning...');
+
             return $token->accessToken;
         }
 
@@ -377,11 +420,15 @@ final class Client
      */
     private function setTokenOnStorage(Token $token)
     {
+        // Always set the identity cookie first, regardless of storage success
+        // This ensures the frontend is updated even if token storage fails
+        $this->setIdentityCookie($token->idToken);
+
         try {
             $decodedToken = $this->decodeToken($token->idToken, false);
             $this->authStorage->set($decodedToken->sub, $token);
-        } catch (ExpiredException $ex) {
-            $this->logger->debug('id token is expired. returning...');
+        } catch (TokenInvalidException $ex) {
+            $this->logger->error('Invalid token format: ' . $ex->getMessage());
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
             throw new UnexpectedErrorException('Unexpected error occurred.: ' . $ex->getMessage(), 0, $ex);
@@ -396,9 +443,10 @@ final class Client
     {
         try {
             $decodedToken = $this->decodeToken($idToken, false);
+
             return $this->authStorage->get($decodedToken->sub);
-        } catch (ExpiredException $ex) {
-            $this->logger->debug('id token is expired. returning...');
+        } catch (TokenInvalidException $ex) {
+            $this->logger->error('Invalid token format: ' . $ex->getMessage());
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
             throw new UnexpectedErrorException('Unexpected error occurred: ' . $ex->getMessage(), 0, $ex);
@@ -414,12 +462,16 @@ final class Client
      */
     private function decodeToken($token, $validateExp = true)
     {
-        if (!$token) {
+        if (!$token || !is_string($token)) {
             throw new TokenInvalidException('Token cannot be empty or null.');
         }
 
         if (!$validateExp) {
             $tks = explode('.', $token);
+            if (count($tks) < 3 || !isset($tks[1]) || empty($tks[1])) {
+                throw new TokenInvalidException('Token format is invalid. Expected JWT with 3 parts.');
+            }
+
             return JWT::jsonDecode(JWT::urlsafeB64Decode($tks[1]));
         }
 
@@ -434,7 +486,7 @@ final class Client
         $cachedJWKSItem = $this->cacheItemPool->getItem(self::JWKS_CACHE_KEY);
 
         if (!$cachedJWKSItem->isHit()) {
-            $response = $this->httpClient->request("GET", "certs", ['base_uri' => $this->authServerBaseUri]);
+            $response = $this->httpClient->request('GET', 'certs', ['base_uri' => $this->authServerBaseUri]);
             $jwks = json_decode($response->getContent(), true);
             $cachedJWKSItem->set($jwks)->expiresAfter(self::JWKS_CACHE_TTL);
             $this->cacheItemPool->save($cachedJWKSItem);
@@ -451,11 +503,7 @@ final class Client
      */
     private function handleAuthCode($code)
     {
-        $token = $this->connect($code);
-
-        if ($token) {
-            $this->setIdentityCookie($token->idToken);
-        }
+        $this->connect($code);
     }
 
     /**
@@ -470,11 +518,37 @@ final class Client
     }
 
     /**
+     * @param string|null $token
+     * @return bool
+     */
+    private function isValidJwtFormat($token)
+    {
+        if (!$token || !is_string($token)) {
+            return false;
+        }
+
+        $parts = explode('.', $token);
+
+        return count($parts) >= 3 && !empty($parts[1]);
+    }
+
+    /**
      * @return string|null
      */
     private function getIdentityCookie()
     {
-        return $_COOKIE[self::IDENTITY_COOKIE_KEY] ?? null;
+        $token = $_COOKIE[self::IDENTITY_COOKIE_KEY] ?? null;
+        if ($token === null) {
+            return null;
+        }
+
+        if (!$this->isValidJwtFormat($token)) {
+            $this->removeIdentityCookie();
+
+            return null;
+        }
+
+        return $token;
     }
 
     /**
@@ -484,7 +558,20 @@ final class Client
     private function setIdentityCookie($idToken)
     {
         if (!headers_sent()) {
-            setcookie(self::IDENTITY_COOKIE_KEY, $idToken, strtotime("2038-01-1 00:00:00"), '/', $this->getCookieDomain(), true, false);
+            // HttpOnly = false allows JavaScript to read the cookie (required for trstd-login element)
+            // Secure = true ensures cookie only sent over HTTPS
+            // SameSite = Strict for maximum CSRF protection
+            // Domain with leading dot allows access across subdomains
+            // Expires = max timestamp for persistent cookie (Year 2038)
+            $options = [
+                'expires' => 2147483647, // Max 32-bit timestamp (2038-01-19)
+                'path' => '/',
+                'domain' => '.' . $this->getCookieDomain(),
+                'secure' => true,
+                'httponly' => false,
+                'samesite' => 'Strict',
+            ];
+            setcookie(self::IDENTITY_COOKIE_KEY, $idToken, $options);
         }
     }
 
@@ -494,7 +581,15 @@ final class Client
     private function removeIdentityCookie()
     {
         if (!headers_sent()) {
-            setcookie(self::IDENTITY_COOKIE_KEY, '', time() - 3600, '/', $this->getCookieDomain(), true, false);
+            $options = [
+                'expires' => time() - 3600,
+                'path' => '/',
+                'domain' => '.' . $this->getCookieDomain(),
+                'secure' => true,
+                'httponly' => false,
+                'samesite' => 'Strict',
+            ];
+            setcookie(self::IDENTITY_COOKIE_KEY, '', $options);
         }
     }
 
@@ -546,6 +641,7 @@ final class Client
     private function getCookieDomain()
     {
         $host = $_SERVER['HTTP_HOST'] ?? '';
+
         // Remove port if present (e.g., "example.com:8080" becomes "example.com")
         return explode(':', $host)[0];
     }
