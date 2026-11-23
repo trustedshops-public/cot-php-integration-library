@@ -12,7 +12,7 @@ orbs:
 executors:
   php:
     docker:
-      - image: cimg/php:8.5.12
+      - image: cimg/php:8.6.0
     resource_class: small
 
 jobs:
